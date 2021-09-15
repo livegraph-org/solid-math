@@ -10,6 +10,7 @@ import { prune as pruneGraph } from '../algorithms'
 import numeric from 'numeric'
 import Statement from './Statement'
 // import useSimulation from '../hooks/simulation'
+import { findMathDocumentsOfPerson, findFriends } from '../dataTest'
 
 const transform = (matrix: number[][], vector: Vector): Vector => {
   const raw = numeric.dot(
@@ -130,6 +131,11 @@ const VisualizationContainer: React.FC = props => {
   const [selectedNode, setSelectedNode] = useState<string | undefined>()
 
   const [info] = useContext(SessionContext)
+
+  useEffect(() => {
+    findMathDocumentsOfPerson(info?.webId ?? '').then(console.log)
+    findFriends(info?.webId ?? '').then(console.log)
+  }, [info])
 
   // abstract graph
   const [graph, revalidate] = useGraph()

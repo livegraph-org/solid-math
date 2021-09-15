@@ -4,10 +4,14 @@ import {
   SolidDataset,
   WithResourceInfo,
   UrlString,
+  getThingAll,
+  getTermAll,
+  getTerm,
+  asUrl,
 } from '@inrupt/solid-client'
 import { fetch } from '@inrupt/solid-client-authn-browser'
 import useSwr from 'swr'
-import { getThingAll, getTermAll, getTerm, asUrl } from '@inrupt/solid-client'
+import { rdf, dct, rdfs } from 'rdf-namespaces'
 
 export type GraphNode = {
   type: UrlString
@@ -58,14 +62,9 @@ export default function useGraph(): [Graph, () => void] {
       const things = getThingAll(data)
       things.forEach(thing => {
         const uri = asUrl(thing)
-        const type =
-          getTerm(thing, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type')
-            ?.value ?? ''
-        const description =
-          getTerm(thing, 'http://purl.org/dc/terms/description')?.value ?? ''
-        const label =
-          getTerm(thing, 'https://www.w3.org/2000/01/rdf-schema#label')
-            ?.value ?? ''
+        const type = getTerm(thing, rdf.type)?.value ?? ''
+        const description = getTerm(thing, dct.description)?.value ?? ''
+        const label = getTerm(thing, rdfs.label)?.value ?? ''
         const dependencies = getTermAll(
           thing,
           'https://terms.math.livegraph.org#depends_on',
