@@ -11,68 +11,56 @@ const Statement = ({ node, onSelectNode }: Props) => {
   const dependencies: GraphNode[] = Object.values(node.dependencies)
   const dependents: GraphNode[] = Object.values(node.dependents)
   return (
-    <div
-      style={{
-        position: 'fixed',
-        width: '100%',
-        top: '0',
-        bottom: 0,
-        pointerEvents: 'none',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-      }}
-    >
-      <div className="columns mr-1 mt-6">
-        <div className="column is-one-quarter is-offset-three-quarters">
-          <div
-            className="card"
-            style={{ pointerEvents: 'all', overflowX: 'auto', width: '100%' }}
+    <div className="card">
+      <header className="card-header">
+        <p className="card-header-title">
+          <a href={node.uri}>{node.label}</a>
+        </p>
+        <span className="card-header-icon">
+          <button
+            className="delete"
+            aria-label="close"
+            onClick={() => onSelectNode('')}
           >
-            <header className="card-header">
-              <p className="card-header-title">{node.label}</p>
-            </header>
-            <section className="card-content">
-              <Math>{node.description}</Math>
-            </section>
-            <header className="card-header">
-              <p className="card-header-title">
-                dependencies: {dependencies.length}
-              </p>
-            </header>
-            <section className="card-content">
-              <ul className="buttons are-small">
-                {dependencies.map(dependency => (
-                  <li
-                    onClick={() => onSelectNode(dependency.uri)}
-                    key={dependency.uri}
-                    className="button is-link is-inverted"
-                  >
-                    {dependency.label}
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <header className="card-header">
-              <p className="card-header-title">
-                dependents: {dependents.length}
-              </p>
-            </header>
-            <section className="card-content">
-              <ul className="buttons are-small">
-                {dependents.map(dependent => (
-                  <li
-                    onClick={() => onSelectNode(dependent.uri)}
-                    key={dependent.uri}
-                    className="button is-link is-inverted"
-                  >
-                    {dependent.label}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </div>
-        </div>
-      </div>
+            close
+          </button>
+        </span>
+      </header>
+      <section className="card-content">
+        <Math>{node.description}</Math>
+      </section>
+      <header className="card-header">
+        <p className="card-header-title">dependencies: {dependencies.length}</p>
+      </header>
+      <section className="card-content">
+        <ul className="buttons are-small">
+          {dependencies.map(dependency => (
+            <li
+              onClick={() => onSelectNode(dependency.uri)}
+              key={dependency.uri}
+              className="button is-link is-inverted"
+            >
+              {dependency.label}
+            </li>
+          ))}
+        </ul>
+      </section>
+      <header className="card-header">
+        <p className="card-header-title">dependents: {dependents.length}</p>
+      </header>
+      <section className="card-content">
+        <ul className="buttons are-small">
+          {dependents.map(dependent => (
+            <li
+              onClick={() => onSelectNode(dependent.uri)}
+              key={dependent.uri}
+              className="button is-link is-inverted"
+            >
+              {dependent.label}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }

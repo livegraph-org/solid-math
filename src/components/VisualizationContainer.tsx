@@ -9,9 +9,11 @@ import { Grid } from '../helpers/draw'
 import { prune as pruneGraph } from '../algorithms'
 import numeric from 'numeric'
 import Statement from './Statement'
+import Search from './Search'
 // import useSimulation from '../hooks/simulation'
 import { findMathDocumentsOfPerson, findFriends } from '../dataTest'
 import { UrlString } from '@inrupt/solid-client'
+import styled from 'styled-components'
 
 const transform = (matrix: number[][], vector: Vector): Vector => {
   const raw = numeric.dot(
@@ -21,6 +23,31 @@ const transform = (matrix: number[][], vector: Vector): Vector => {
   const [[x], [y]] = raw
   return [x, y]
 }
+
+const ICOutside = styled.div`
+  position: fixed;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+`
+const ICInside = styled.div`
+  pointer-events: all;
+  overflow-x: auto;
+  width: 100%;
+`
+
+const InfoContainer = ({ children }: { children: React.ReactNode }) => (
+  <ICOutside>
+    <div className="columns mr-1 mt-6">
+      <div className="column is-one-quarter is-offset-three-quarters">
+        <ICInside>{children}</ICInside>
+      </div>
+    </div>
+  </ICOutside>
+)
 
 type VisualizationNode = {
   x: number
@@ -139,6 +166,8 @@ const VisualizationContainer: React.FC = props => {
     links: [],
   })
 
+  const [search, setSearch] = useState('')
+
   const [highlightedNode, setHighlightedNode] = useState<string | undefined>()
   const [selectedNode, setSelectedNode] = useState<string | undefined>()
 
@@ -256,14 +285,42 @@ const VisualizationContainer: React.FC = props => {
         {...props}
       />
 
-      {selectedNode && (
-        <Statement
-          node={graph[selectedNode]}
-          onSelectNode={uri => setSelectedNode(uri)}
-        />
-      )}
+      <InfoContainer>
+        {selectedNode ? (
+          <Statement
+            node={graph[selectedNode]}
+            onSelectNode={uri => setSelectedNode(uri)}
+          />
+        ) : (
+          <Search
+            value={search}
+            onChange={setSearch}
+            options={selectSearchOptions(search, graph)}
+            onSelect={setSelectedNode}
+          />
+        )}
+      </InfoContainer>
     </>
   )
+}
+
+const selectSearchOptions = (
+  query: string,
+  graph: Graph,
+): { label: string; value: string }[] => {
+  if (query.length < 2) return []
+  return Object.values(graph)
+    .filter(
+      ({ uri, label }) =>
+        label.toLowerCase().includes(query.toLowerCase()) ||
+        uri.toLowerCase().includes(query.toLowerCase()),
+    )
+    .sort(
+      ({ dependents: a }, { dependents: b }) =>
+        Object.values(b).length - Object.values(a).length,
+    )
+    .map(({ uri, label }) => ({ value: uri, label }))
+    .slice(0, 10)
 }
 
 export default VisualizationContainer
