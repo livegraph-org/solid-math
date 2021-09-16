@@ -48,10 +48,22 @@ const Visualization: React.FC<Props> = ({
         context.clearRect(-offset[0], -offset[1], width, height)
         drawGrid(context, grid, width, height, offset)
         graph.links.forEach(link => {
+          // we're counting a unit vector to make links that don't overlap nodes
+          // source point
+          const s = [link.source.x, link.source.y]
+          // target point
+          const t = [link.target.x, link.target.y]
+          // vector
+          const v = numeric.sub(t, s)
+          // vector size
+          const size = Math.sqrt(v[0] ** 2 + v[1] ** 2)
+          // unit vector
+          const i = numeric.div(v, size)
           drawLine(
             context,
-            [link.source.x, link.source.y],
-            [link.target.x, link.target.y],
+            // links don't overlap circles
+            numeric.add(s, numeric.mul(i, link.source.r)) as Vector,
+            numeric.sub(t, numeric.mul(i, link.target.r)) as Vector,
             {
               strokeStyle: 'white',
               lineWidth: 0.5,
