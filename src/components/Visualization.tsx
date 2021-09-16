@@ -66,30 +66,32 @@ const Visualization: React.FC<Props> = ({
         const rest = graph.nodes.filter(({ style }) => !style)
 
         // draw all the nodes which are not special
-        rest.forEach(({ x, y }) =>
-          drawCircle(context, [x, y], 10, { fillStyle: '#fff8' }),
+        rest.forEach(({ x, y, r }) =>
+          drawCircle(context, [x, y], r, { fillStyle: '#fff8' }),
         )
 
-        rest.forEach(({ x, y, label }) =>
-          drawText(context, [x + 15, y], label, { fillStyle: '#fff4' }),
-        )
-
-        // draw accented nodes
-        accented.forEach(({ x, y }) =>
-          drawCircle(context, [x, y], 10, { fillStyle: accentedColor }),
-        )
-
-        accented.forEach(({ x, y, label }) =>
-          drawText(context, [x + 15, y], label, { fillStyle: accentedColor }),
+        rest.forEach(({ x, y, r, label }) =>
+          drawText(context, [x + r + 5, y], label, { fillStyle: '#fff4' }),
         )
 
         // draw accented nodes
-        focused.forEach(({ x, y }) =>
-          drawCircle(context, [x, y], 10, { fillStyle: focusedColor }),
+        accented.forEach(({ x, y, r }) =>
+          drawCircle(context, [x, y], r, { fillStyle: accentedColor }),
         )
 
-        focused.forEach(({ x, y, label }) =>
-          drawText(context, [x + 15, y], label, { fillStyle: focusedColor }),
+        accented.forEach(({ x, y, r, label }) =>
+          drawText(context, [x + r + 5, y], label, {
+            fillStyle: accentedColor,
+          }),
+        )
+
+        // draw accented nodes
+        focused.forEach(({ x, y, r }) =>
+          drawCircle(context, [x, y], r, { fillStyle: focusedColor }),
+        )
+
+        focused.forEach(({ x, y, r, label }) =>
+          drawText(context, [x + r + 5, y], label, { fillStyle: focusedColor }),
         )
 
         return () => context.restore()

@@ -28,7 +28,7 @@ export const prune = (input: AbstractGraph): AbstractGraph => {
   Object.values(input).forEach(node => {
     graph.setNode(node.uri)
 
-    Object.values(node.dependsOn).forEach(dependency =>
+    Object.values(node.dependencies).forEach(dependency =>
       graph.setEdge(node.uri, dependency.uri),
     )
   })
@@ -36,7 +36,7 @@ export const prune = (input: AbstractGraph): AbstractGraph => {
   const output: AbstractGraph = Object.fromEntries(
     Object.entries(input).map(([uri, node]) => [
       uri,
-      { ...node, dependsOn: {} },
+      { ...node, dependencies: {} },
     ]),
   )
 
@@ -45,7 +45,7 @@ export const prune = (input: AbstractGraph): AbstractGraph => {
     .map(({ v: source, w: target }) => ({ source, target }))
 
   prunedEdges.forEach(({ source, target }) => {
-    output[source].dependsOn[target] = output[target]
+    output[source].dependencies[target] = output[target]
   })
 
   return output

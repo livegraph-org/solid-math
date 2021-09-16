@@ -15,7 +15,10 @@ export type GraphNode = {
   uri: UrlString
   description: string
   label: string
-  dependsOn: {
+  dependencies: {
+    [uri: string]: GraphNode
+  }
+  dependents: {
     [uri: string]: GraphNode
   }
 }
@@ -30,7 +33,8 @@ const ensureNode = (graph: Graph, uri: UrlString): GraphNode => {
   graph[uri] = graph[uri] ?? {
     type: '',
     description: '',
-    dependsOn: {},
+    dependencies: {},
+    dependents: {},
     label: '',
   }
   return graph[uri]
@@ -45,23 +49,24 @@ const fetchGraph = async (uri: UrlString): Promise<Graph> => {
     const type = getTerm(thing, rdf.type)?.value ?? ''
     const description = getTerm(thing, dct.description)?.value ?? ''
     const label = getTerm(thing, rdfs.label)?.value ?? ''
-    const dependencies = getTermAll(
+    const dependencies: GraphNode['dependencies'] = getTermAll(
       thing,
       'https://terms.math.livegraph.org#depends_on',
-    )
-    const dependsOn: GraphNode['dependsOn'] = dependencies.reduce(
-      (dependsOn, dependency) => {
-        dependsOn[dependency.value] = ensureNode(graph, dependency.value)
-        return dependsOn
-      },
-      {} as GraphNode['dependsOn'],
-    )
+    ).reduce((dependencies, dependency) => {
+      dependencies[dependency.value] = ensureNode(graph, dependency.value)
+      return dependencies
+    }, {} as GraphNode['dependencies'])
     Object.assign(ensureNode(graph, uri), {
       type,
       description,
-      dependsOn,
+      dependencies,
       label,
       uri,
+    })
+
+    Object.keys(dependencies).forEach(dependencyUri => {
+      ensureNode(graph, dependencyUri)
+      graph[dependencyUri].dependents[uri] = graph[uri]
     })
   })
   return graph
@@ -113,17 +118,17 @@ export default function useGraph(uris: UrlString[]): [Graph, () => void] {
             thing,
             'https://terms.math.livegraph.org#depends_on',
           )
-          const dependsOn: GraphNode['dependsOn'] = dependencies.reduce(
-            (dependsOn, dependency) => {
-              dependsOn[dependency.value] = ensureNode(graph, dependency.value)
-              return dependsOn
+          const dependencies: GraphNode['dependencies'] = dependencies.reduce(
+            (dependencies, dependency) => {
+              dependencies[dependency.value] = ensureNode(graph, dependency.value)
+              return dependencies
             },
-            {} as GraphNode['dependsOn'],
+            {} as GraphNode['dependencies'],
           )
           Object.assign(ensureNode(graph, uri), {
             type,
             description,
-            dependsOn,
+            dependencies,
             label,
             uri,
           })

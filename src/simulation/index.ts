@@ -11,10 +11,11 @@ import {
   ForceLink,
 } from 'd3-force'
 import forceGravity from './gravity'
-import { Coords, Uri, SimulationNode, SimulationLink } from './types'
+import { Coords, Uri, SimulationNode, SimulationLink, Node } from './types'
 
 interface SimulationNodeExt extends SimulationNodeDatum {
   uri: Uri
+  r: number
 }
 
 export type SimulationLinkExt = SimulationLinkDatum<SimulationNodeExt>
@@ -38,7 +39,10 @@ export default class Simulation {
     .force('charge', forceManyBody().strength(-150).distanceMax(500))
     .force('gravityX', forceX(0).strength(0.01))
     .force('gravityY', forceY(0).strength(0.01))
-    .force('collide', forceCollide(15))
+    .force(
+      'collide',
+      forceCollide(({ r }: SimulationNodeExt) => r + 5),
+    )
     .force('center', forceCenter(0, 0))
     .stop()
 
@@ -87,19 +91,19 @@ export default class Simulation {
     return this.simulation.stop()
   }
 
-  update = ({
-    nodes,
-    links,
-  }: {
-    nodes: SimulationNode[]
-    links: SimulationLink[]
-  }) => {
+  update = ({ nodes, links }: { nodes: Node[]; links: SimulationLink[] }) => {
     this.simulation.stop()
-    this.nodes = nodes.map(node => ({
+    // combine current nodes and the old nodes
+    const thisNodeDict: { [uri: string]: SimulationNodeExt } =
+      Object.fromEntries(this.nodes.map(node => [node.uri, node]))
+    const updatedNodes: SimulationNodeExt[] = nodes.map(node => ({
       ...node,
-      x: node.x || Math.random() * 400,
-      y: node.y || Math.random() * 400,
-    })) as SimulationNodeExt[]
+      x: (0.5 - Math.random()) * 800,
+      y: (0.5 - Math.random()) * 800,
+      ...thisNodeDict[node.uri],
+      r: node.r,
+    }))
+    this.nodes = updatedNodes
     this.links = links.map(link => ({ ...link })) as SimulationLinkExt[]
 
     this.simulation.nodes(this.nodes)
@@ -116,9 +120,9 @@ export default class Simulation {
       >
     ).links(this.links)
 
-    this.simulation.alpha(0.5).restart()
+    this.simulation.alpha(1).restart()
   }
 
   selectNode = ({ x, y }: Coords) =>
-    this.simulation.find(x, y, 32) as SimulationNodeExt
+    this.simulation.find(x, y, 40) as SimulationNodeExt
 }

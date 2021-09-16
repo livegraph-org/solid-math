@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
 import Visualization from './Visualization'
-import useGraph, { Graph } from '../hooks/graph'
+import useGraph, { Graph, GraphNode } from '../hooks/graph'
 import Simulation, { SimulationLinkExt } from '../simulation'
 import { SimulationNode, SimulationLink } from '../simulation/types'
 import { Vector } from '../helpers/draw'
@@ -25,9 +25,16 @@ const transform = (matrix: number[][], vector: Vector): Vector => {
 type VisualizationNode = {
   x: number
   y: number
+  r: number
   uri: string
   label: string
   style: string
+}
+
+function nodeRadius(node: GraphNode) {
+  let count = Object.entries(node.dependents).length ?? 0
+  count = count < 1 ? 1 : count
+  return count ** 0.42 * 5
 }
 
 type VisualizationLink = {
@@ -73,7 +80,8 @@ const transformLayout = (
   const transformedNodesDict = Object.fromEntries(
     graph.nodes.map(node => {
       const [x, y] = transform(matrix, [node.x, node.y])
-      return [node.uri, { ...node, x, y, style: '' }]
+      const r = matrix[0][0] * node.r
+      return [node.uri, { ...node, x, y, r, style: '' }]
     }),
   )
 
@@ -115,7 +123,7 @@ const selectNodeDependencies = (
   graph: Graph,
 ): string[] => {
   if (!selectedNodeUri) return []
-  return Object.values(graph[selectedNodeUri]?.dependsOn ?? {}).map(
+  return Object.values(graph[selectedNodeUri]?.dependencies ?? {}).map(
     node => node.uri,
   )
 }
@@ -188,16 +196,19 @@ const VisualizationContainer: React.FC = props => {
       prunedOrFullGraph = graph
     }
 
-    const nodes = Object.values(prunedOrFullGraph).map(({ label, uri }) => ({
-      label,
+    const nodes = Object.values(prunedOrFullGraph).map(node => ({
+      label: node.label,
       x: Math.random() * 400,
       y: Math.random() * 400,
-      uri,
+      r: nodeRadius(node),
+      uri: node.uri,
     }))
 
     const links = Object.values(prunedOrFullGraph).reduce(
-      (nodes, { uri: source, dependsOn }) => {
-        Object.keys(dependsOn).forEach(target => nodes.push({ source, target }))
+      (nodes, { uri: source, dependencies }) => {
+        Object.keys(dependencies).forEach(target =>
+          nodes.push({ source, target }),
+        )
         return nodes
       },
       [] as SimulationLink[],

@@ -8,7 +8,8 @@ interface Props {
 }
 
 const Statement = ({ node, onSelectNode }: Props) => {
-  const dependencies: GraphNode[] = Object.values(node.dependsOn)
+  const dependencies: GraphNode[] = Object.values(node.dependencies)
+  const dependents: GraphNode[] = Object.values(node.dependents)
   return (
     <div
       style={{
@@ -47,6 +48,24 @@ const Statement = ({ node, onSelectNode }: Props) => {
                     className="button is-link is-inverted"
                   >
                     {dependency.label}
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <header className="card-header">
+              <p className="card-header-title">
+                dependents: {dependents.length}
+              </p>
+            </header>
+            <section className="card-content">
+              <ul className="buttons are-small">
+                {dependents.map(dependent => (
+                  <li
+                    onClick={() => onSelectNode(dependent.uri)}
+                    key={dependent.uri}
+                    className="button is-link is-inverted"
+                  >
+                    {dependent.label}
                   </li>
                 ))}
               </ul>
