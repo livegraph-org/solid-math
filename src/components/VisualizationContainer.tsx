@@ -11,6 +11,7 @@ import numeric from 'numeric'
 import Statement from './Statement'
 // import useSimulation from '../hooks/simulation'
 import { findMathDocumentsOfPerson, findFriends } from '../dataTest'
+import { UrlString } from '@inrupt/solid-client'
 
 const transform = (matrix: number[][], vector: Vector): Vector => {
   const raw = numeric.dot(
@@ -121,6 +122,9 @@ const selectNodeDependencies = (
 
 const VisualizationContainer: React.FC = props => {
   const [simulation] = useState(new Simulation())
+  const [documents, setDocuments] = useState<UrlString[]>([
+    'https://mrkvon.solidcommunity.net/public/math/index.ttl',
+  ])
 
   const [layout, setLayout] = useState<SimulationGraph>({
     nodes: [],
@@ -131,14 +135,15 @@ const VisualizationContainer: React.FC = props => {
   const [selectedNode, setSelectedNode] = useState<string | undefined>()
 
   const [info] = useContext(SessionContext)
+  // abstract graph
+  const graph = useGraph(documents)
 
   useEffect(() => {
-    findMathDocumentsOfPerson(info?.webId ?? '').then(console.log)
+    findMathDocumentsOfPerson(info?.webId ?? '').then(docs => {
+      setDocuments(docs)
+    })
     findFriends(info?.webId ?? '').then(console.log)
   }, [info])
-
-  // abstract graph
-  const [graph, revalidate] = useGraph()
 
   // transformation matrix
   const [matrix, setMatrix] = useState<number[][]>([
@@ -166,12 +171,13 @@ const VisualizationContainer: React.FC = props => {
     }
   }, [simulation])
 
-  // refetch graph data when user gets logged in or out
+  /*/ refetch graph data when user gets logged in or out
   useEffect(() => {
     ;(async () => {
       await revalidate()
     })()
   }, [info, revalidate])
+  */
 
   // when graph changes, update simulation
   useEffect(() => {

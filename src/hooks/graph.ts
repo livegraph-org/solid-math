@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
   getSolidDataset,
-  SolidDataset,
-  WithResourceInfo,
   UrlString,
   getThingAll,
   getTermAll,
@@ -10,7 +8,6 @@ import {
   asUrl,
 } from '@inrupt/solid-client'
 import { fetch } from '@inrupt/solid-client-authn-browser'
-import useSwr from 'swr'
 import { rdf, dct, rdfs } from 'rdf-namespaces'
 
 export type GraphNode = {
@@ -39,18 +36,64 @@ const ensureNode = (graph: Graph, uri: UrlString): GraphNode => {
   return graph[uri]
 }
 
-const fetcher = async (
-  url: UrlString,
-): Promise<SolidDataset & WithResourceInfo> => {
-  return await getSolidDataset(url, { fetch })
+const fetchGraph = async (uri: UrlString): Promise<Graph> => {
+  const dataset = await getSolidDataset(uri, { fetch })
+  const things = getThingAll(dataset)
+  const graph: Graph = {}
+  things.forEach(thing => {
+    const uri = asUrl(thing)
+    const type = getTerm(thing, rdf.type)?.value ?? ''
+    const description = getTerm(thing, dct.description)?.value ?? ''
+    const label = getTerm(thing, rdfs.label)?.value ?? ''
+    const dependencies = getTermAll(
+      thing,
+      'https://terms.math.livegraph.org#depends_on',
+    )
+    const dependsOn: GraphNode['dependsOn'] = dependencies.reduce(
+      (dependsOn, dependency) => {
+        dependsOn[dependency.value] = ensureNode(graph, dependency.value)
+        return dependsOn
+      },
+      {} as GraphNode['dependsOn'],
+    )
+    Object.assign(ensureNode(graph, uri), {
+      type,
+      description,
+      dependsOn,
+      label,
+      uri,
+    })
+  })
+  return graph
 }
 
-export default function useGraph(): [Graph, () => void] {
+const useGraph = (uris: UrlString[]) => {
+  const [graph, setGraph] = useState<Graph>({})
+
+  useEffect(() => {
+    uris.forEach(async uri => {
+      const data = await fetchGraph(uri)
+      setGraph(graph => ({
+        ...graph,
+        ...data,
+      }))
+    })
+  }, [uris])
+  return graph
+}
+
+export default useGraph
+
+/*
+const fetcher = async (
+  uris: UrlString[],
+): Promise<(SolidDataset & WithResourceInfo)[]> => {
+  return await Promise.all(uris.map(url => getSolidDataset(url, { fetch })))
+}
+
+export default function useGraph(uris: UrlString[]): [Graph, () => void] {
   // download graph
-  const { data, revalidate } = useSwr(
-    'https://mrkvon.solidcommunity.net/public/math/index.ttl',
-    fetcher,
-  )
+  const { data, revalidate } = useSwr(() => uris, fetcher)
 
   const [response, setResponse] = useState<Graph>({})
 
@@ -59,31 +102,33 @@ export default function useGraph(): [Graph, () => void] {
     const graph: Graph = {}
 
     if (data) {
-      const things = getThingAll(data)
-      things.forEach(thing => {
-        const uri = asUrl(thing)
-        const type = getTerm(thing, rdf.type)?.value ?? ''
-        const description = getTerm(thing, dct.description)?.value ?? ''
-        const label = getTerm(thing, rdfs.label)?.value ?? ''
-        const dependencies = getTermAll(
-          thing,
-          'https://terms.math.livegraph.org#depends_on',
-        )
-        const dependsOn: GraphNode['dependsOn'] = dependencies.reduce(
-          (dependsOn, dependency) => {
-            dependsOn[dependency.value] = ensureNode(graph, dependency.value)
-            return dependsOn
-          },
-          {} as GraphNode['dependsOn'],
-        )
-        Object.assign(ensureNode(graph, uri), {
-          type,
-          description,
-          dependsOn,
-          label,
-          uri,
+      for (const datum of data) {
+        const things = getThingAll(datum)
+        things.forEach(thing => {
+          const uri = asUrl(thing)
+          const type = getTerm(thing, rdf.type)?.value ?? ''
+          const description = getTerm(thing, dct.description)?.value ?? ''
+          const label = getTerm(thing, rdfs.label)?.value ?? ''
+          const dependencies = getTermAll(
+            thing,
+            'https://terms.math.livegraph.org#depends_on',
+          )
+          const dependsOn: GraphNode['dependsOn'] = dependencies.reduce(
+            (dependsOn, dependency) => {
+              dependsOn[dependency.value] = ensureNode(graph, dependency.value)
+              return dependsOn
+            },
+            {} as GraphNode['dependsOn'],
+          )
+          Object.assign(ensureNode(graph, uri), {
+            type,
+            description,
+            dependsOn,
+            label,
+            uri,
+          })
         })
-      })
+      }
     }
 
     setResponse(graph)
@@ -91,3 +136,4 @@ export default function useGraph(): [Graph, () => void] {
 
   return [response, revalidate]
 }
+*/

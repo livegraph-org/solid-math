@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { SessionContext } from '../contexts/session'
-import { BFSFriends, findMathDocumentsOfPerson } from '../dataTest'
+import { /*BFSFriends,*/ findMathDocumentsOfPerson } from '../dataTest'
 import { IriString } from '@inrupt/solid-client'
 
 export const PeopleContext = createContext<string[]>([])
@@ -25,7 +25,8 @@ const DataContainer = ({ children }: Props) => {
   useEffect(() => {
     // here we lookup people connected to us
     if (info?.isLoggedIn) {
-      BFSFriends(info.webId, setPeople)
+      // BFSFriends(info.webId, setPeople)
+      setPeople([info.webId])
     } else {
       setPeople([])
     }
