@@ -1,5 +1,5 @@
 import React from 'react'
-import Login from './Login'
+import Login from '../features/login/Login'
 import VisualizationContainer from './VisualizationContainer'
 import styled from 'styled-components'
 import { PeopleListContainer } from './PeopleList'

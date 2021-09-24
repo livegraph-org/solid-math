@@ -2,8 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import './index.scss'
 import App from './App'
+import { store } from './app/store'
 import reportWebVitals from './reportWebVitals'
-import SessionProvider from './components/SessionProvider'
+import { Provider } from 'react-redux'
 import Modal from 'react-modal'
 
 if (typeof document === 'object') {
@@ -14,9 +15,9 @@ if (typeof document === 'object') {
 
 ReactDOM.render(
   <React.StrictMode>
-    <SessionProvider>
+    <Provider store={store}>
       <App />
-    </SessionProvider>
+    </Provider>
   </React.StrictMode>,
   document.getElementById('root'),
 )
