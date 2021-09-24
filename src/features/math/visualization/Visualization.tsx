@@ -1,18 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react'
-import {
-  Vector,
-  Grid,
-  drawGrid,
-  drawCircle,
-  drawLine,
-  drawText,
-} from '../helpers/draw'
+import { drawGrid, drawCircle, drawLine, drawText } from './helpers/draw'
 import classnames from 'classnames'
 import { drag } from 'd3-drag'
 import { zoom } from 'd3-zoom'
 import { select } from 'd3-selection'
 import numeric from 'numeric'
-import { VisualizationGraph } from './VisualizationContainer'
+import { VisualizationGraph, Vector, Grid } from './types'
 
 type Props = Partial<React.CanvasHTMLAttributes<HTMLCanvasElement>> & {
   graph: VisualizationGraph

@@ -1,4 +1,4 @@
-import { SimulationLinkExt } from './index'
+import { SimulationLinkExt } from './types'
 
 export default function gravity() {
   let links: SimulationLinkExt[] = []

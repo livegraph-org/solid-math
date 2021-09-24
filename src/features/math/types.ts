@@ -1,11 +1,10 @@
-export type Uri = string
-
+/** Experimental Types
 export interface Access {
   [role: string]: string[]
 }
 
 export interface Statement {
-  uri: Uri
+  uri: string
   doc: Uri
   label: string
   description?: string
@@ -31,25 +30,6 @@ export interface DependencyExtended {
   dependency: StatementWithAccess
   doc: Document
 }
+*/
 
-export interface Node {
-  label: string
-  uri: Uri
-  r: number
-}
-
-export interface Coords {
-  x: number
-  y: number
-}
-
-export interface SimulationNode extends Node, Coords {}
-
-export interface SimulationLink {
-  source: Uri
-  target: Uri
-}
-
-export interface Dict<T> {
-  [key: string]: T
-}
+export {}

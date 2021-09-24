@@ -1,20 +1,21 @@
 import React from 'react'
-import { GraphNode } from '../hooks/graph'
+import { GraphNode, select, selectSelectedNode } from './mathSlice'
 import Math from './Math'
+import { useAppDispatch, useAppSelector } from '../../app/hooks'
 
-interface Props {
-  node: GraphNode
-  onSelectNode: (uri: string) => void
-}
+const Statement = () => {
+  const dispatch = useAppDispatch()
+  const onSelectNode = (uri: string) => dispatch(select(uri))
+  const node = useAppSelector(selectSelectedNode)
 
-const Statement = ({ node, onSelectNode }: Props) => {
   const dependencies: GraphNode[] = Object.values(node.dependencies)
   const dependents: GraphNode[] = Object.values(node.dependents)
+
   return (
     <div className="card">
       <header className="card-header">
         <p className="card-header-title">
-          <a href={node.uri}>{node.label}</a>
+          <a href={node.uri}>{node.label.en}</a>
         </p>
         <span className="card-header-icon">
           <button
@@ -27,7 +28,7 @@ const Statement = ({ node, onSelectNode }: Props) => {
         </span>
       </header>
       <section className="card-content">
-        <Math>{node.description}</Math>
+        <Math>{node.description.en}</Math>
       </section>
       <header className="card-header">
         <p className="card-header-title">dependencies: {dependencies.length}</p>
@@ -40,7 +41,7 @@ const Statement = ({ node, onSelectNode }: Props) => {
               key={dependency.uri}
               className="button is-link is-inverted"
             >
-              {dependency.label}
+              {dependency.label.en}
             </li>
           ))}
         </ul>
@@ -56,7 +57,7 @@ const Statement = ({ node, onSelectNode }: Props) => {
               key={dependent.uri}
               className="button is-link is-inverted"
             >
-              {dependent.label}
+              {dependent.label.en}
             </li>
           ))}
         </ul>

@@ -6,19 +6,18 @@ import {
   forceCenter,
   forceX,
   forceY,
-  SimulationNodeDatum,
-  SimulationLinkDatum,
   ForceLink,
 } from 'd3-force'
+import { Dictionary } from '../../../../app/types'
 import forceGravity from './gravity'
-import { Coords, Uri, SimulationNode, SimulationLink, Node } from './types'
-
-interface SimulationNodeExt extends SimulationNodeDatum {
-  uri: Uri
-  r: number
-}
-
-export type SimulationLinkExt = SimulationLinkDatum<SimulationNodeExt>
+import {
+  Coords,
+  SimulationNode,
+  SimulationLink,
+  Node,
+  SimulationNodeExt,
+  SimulationLinkExt,
+} from './types'
 
 export default class Simulation {
   nodes: SimulationNodeExt[] = []
@@ -94,8 +93,9 @@ export default class Simulation {
   update = ({ nodes, links }: { nodes: Node[]; links: SimulationLink[] }) => {
     this.simulation.stop()
     // combine current nodes and the old nodes
-    const thisNodeDict: { [uri: string]: SimulationNodeExt } =
-      Object.fromEntries(this.nodes.map(node => [node.uri, node]))
+    const thisNodeDict: Dictionary<SimulationNodeExt> = Object.fromEntries(
+      this.nodes.map(node => [node.uri, node]),
+    )
     const updatedNodes: SimulationNodeExt[] = nodes.map(node => ({
       ...node,
       x: (0.5 - Math.random()) * 800,

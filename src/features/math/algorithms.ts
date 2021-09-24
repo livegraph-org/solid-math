@@ -1,7 +1,7 @@
 import graphlib, { Graph } from 'graphlib'
 // import { Dependency } from './simulation/types'
 // import findCyclesAdjacency from 'elementary-circuits-directed-graph'
-import { Graph as AbstractGraph } from './hooks/graph'
+import { Graph as AbstractGraph } from './mathSlice'
 
 function pruneCore(graph: Graph) {
   if (!graphlib.alg.isAcyclic(graph)) {

@@ -8,6 +8,7 @@ import {
   IriString,
 } from '@inrupt/solid-client'
 import { solid, foaf } from 'rdf-namespaces'
+import { Dictionary } from './app/types'
 
 // following https://github.com/solid/solid/blob/main/proposals/data-discovery.md to discover math documents of a user
 export const findMathDocumentsOfPerson = async (
@@ -62,7 +63,7 @@ export const BFSFriends = async (
 ): Promise<void> => {
   webId = fixUri(webId)
   const timbl = 'https://timbl.solidcommunity.net/profile/card#me'
-  const people: { [iri: string]: BFSPerson } = {
+  const people: Dictionary<BFSPerson> = {
     [webId]: { uri: webId, visited: false },
     [timbl]: { uri: timbl, visited: false },
   }

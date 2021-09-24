@@ -24,7 +24,8 @@ export const init = createAsyncThunk('login/init', async () => {
 export const login = createAsyncThunk(
   'login/login',
   async (oidcIssuer: string) => {
-    return await api.login(oidcIssuer)
+    const response = await api.login(oidcIssuer)
+    return response
   },
 )
 

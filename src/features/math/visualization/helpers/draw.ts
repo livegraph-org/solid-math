@@ -1,10 +1,4 @@
-export type Vector = [number, number]
-
-export type Grid = {
-  origin: Vector // coordinate of the origin
-  distance: number // distance between lines
-  highlight: number // which lines should be highlighted
-}
+import { Vector, Grid } from '../types'
 
 type Options = Partial<CanvasRenderingContext2D>
 
