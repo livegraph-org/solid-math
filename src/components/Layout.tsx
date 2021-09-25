@@ -4,24 +4,12 @@ import VisualizationContainer from '../features/math/visualization/Visualization
 import styled from 'styled-components'
 import About from './About'
 import ControlPanel from '../features/control/ControlPanel'
-
-const PositionedLogin = styled(Login)`
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  display: block;
-`
+import Search from '../features/search/Search'
 
 const PositionedAbout = styled(About)`
   position: fixed;
   bottom: 1rem;
   right: 1rem;
-`
-
-const PositionedControlPanel = styled(ControlPanel)`
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
 `
 
 const FullSizeVisualization = styled(VisualizationContainer)`
@@ -30,14 +18,36 @@ const FullSizeVisualization = styled(VisualizationContainer)`
   display: block;
 `
 
+const TopNav = styled.nav`
+  display: flex;
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+  justify-content: space-between;
+  & > * {
+    pointer-events: all;
+  }
+  padding: 1rem;
+`
+
 const Layout: React.FC = () => {
   return (
     <>
-      <PositionedLogin />
+      <TopNav>
+        <ControlPanel />
+        <div style={{ display: 'flex' }}>
+          <Search
+            style={{
+              display: 'inline-block',
+              position: 'relative',
+              zIndex: 2,
+            }}
+          />
+          <Login />
+        </div>
+      </TopNav>
 
       <PositionedAbout />
-
-      <PositionedControlPanel />
 
       <FullSizeVisualization />
     </>

@@ -3,12 +3,8 @@
 import React from 'react'
 import styled from 'styled-components'
 import classNames from 'classnames'
-import { ReactNode } from 'react-markdown'
 
-interface ButtonProps {
-  className?: string
-  children: ReactNode
-}
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 
 const Button: React.FC<ButtonProps> = ({
   children,

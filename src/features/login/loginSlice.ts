@@ -13,7 +13,7 @@ export interface LoginState {
 const initialState: LoginState = {
   webId: '',
   isLoggedIn: false,
-  status: 'idle',
+  status: 'loading',
 }
 
 // Thunks
@@ -60,8 +60,10 @@ export const loginSlice = createSlice({
       .addCase(logout.pending, state => {
         state.status = 'loading'
       })
-      .addCase(logout.fulfilled, () => {
-        return initialState
+      .addCase(logout.fulfilled, state => {
+        state.status = 'idle'
+        state.webId = ''
+        state.isLoggedIn = false
       })
   },
 })

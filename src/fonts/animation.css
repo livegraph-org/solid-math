@@ -1,6 +1,10 @@
 /*
-   Animation example, for spinners
+   Animation for spinners
 */
+.animate-pulse {
+  animation: spin 1s infinite steps(8);
+}
+
 .animate-spin {
   -moz-animation: spin 2s infinite linear;
   -o-animation: spin 2s infinite linear;

@@ -12,7 +12,6 @@ import { SimulationGraph, SimulationLink } from './simulation/types'
 import { Matrix, Vector } from './types'
 import numeric from 'numeric'
 import Statement from '../Statement'
-import Search from '../../search/Search'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { selectPrunedGraph } from '../mathSlice'
 import InfoContainer from '../InfoContainer'
@@ -128,7 +127,7 @@ const VisualizationContainer: React.FC = props => {
       {
         // @TODO maybe move this stuff out, it's more of a Layout component
       }
-      <InfoContainer>{selectedNode ? <Statement /> : <Search />}</InfoContainer>
+      <InfoContainer>{selectedNode && <Statement />}</InfoContainer>
     </>
   )
 }

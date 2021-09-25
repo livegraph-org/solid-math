@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Modal from 'react-modal'
+import AppButton from '../../components/AppButton'
 
 interface Props {
   onLogin: (oidcIssuer: string) => void
@@ -26,7 +27,7 @@ const LoginPrompt: React.FC<Props> = ({ onLogin, ...props }: Props) => {
   if (!promptOpen) {
     return (
       <>
-        <button
+        <AppButton
           {...props}
           onClick={e => {
             e.preventDefault()
@@ -34,7 +35,7 @@ const LoginPrompt: React.FC<Props> = ({ onLogin, ...props }: Props) => {
           }}
         >
           Login
-        </button>
+        </AppButton>
       </>
     )
   }
