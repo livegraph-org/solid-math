@@ -1,12 +1,7 @@
 import React from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import {
-  highlight,
-  select,
-  selectSearch,
-  selectSearchResults,
-  setSearch,
-} from './mathSlice'
+import { highlight, select } from '../math/mathSlice'
+import { selectSearch, selectSearchResults, setSearch } from './searchSlice'
 
 const Search: React.FC = ({ ...props }) => {
   const value = useAppSelector(selectSearch)

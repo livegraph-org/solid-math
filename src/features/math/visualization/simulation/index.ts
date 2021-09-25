@@ -8,7 +8,7 @@ import {
   forceY,
   ForceLink,
 } from 'd3-force'
-import { Dictionary } from '../../../../app/types'
+import { Dictionary } from '../../../../types'
 import forceGravity from './gravity'
 import {
   Coords,

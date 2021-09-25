@@ -9,7 +9,7 @@ import {
 } from '@inrupt/solid-client'
 import { fetch } from '@inrupt/solid-client-authn-browser'
 import { rdf, rdfs, solid } from 'rdf-namespaces'
-import { Definition, Statement } from './mathSlice'
+import { Definition, Statement } from './types'
 
 interface Graph {
   nodes: (Definition | Statement)[]

@@ -1,6 +1,6 @@
 import { Grid, Matrix, Vector } from '../types'
 import { VisualizationGraph } from '../types'
-import { GraphNode } from '../../mathSlice'
+import { GraphNode } from '../../types'
 import { SimulationGraph } from '../simulation/types'
 import numeric from 'numeric'
 

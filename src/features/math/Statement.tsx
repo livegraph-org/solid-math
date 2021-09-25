@@ -1,7 +1,8 @@
 import React from 'react'
-import { GraphNode, highlight, select, selectSelectedNode } from './mathSlice'
+import { highlight, select, selectSelectedNode } from './mathSlice'
 import Math from './Math'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { GraphNode } from './types'
 
 interface NodeListProps {
   title: string

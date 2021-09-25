@@ -7,48 +7,8 @@ import {
 import { prune } from './algorithms'
 import { RootState } from '../../app/store'
 import * as api from './mathAPI'
-import { Dictionary } from '../../app/types'
-
-interface LanguageString extends Dictionary<string> {
-  en: string // a default language, we always expect it to be there
-  // eventually we'll generalize this
-}
-
-interface Node {
-  id: string
-  description: LanguageString
-  label: LanguageString
-  type: string
-  created: number
-  updated: number
-  // there'll also be citation here
-  // examples and proofs will probably extend this
-  // and we need to figure out where to keep solid documents
-}
-
-interface DefinitionOrStatement extends Node {
-  dependencies: string[]
-  dependents: string[]
-  examples: string[] // to be implemented
-}
-
-export interface Definition extends DefinitionOrStatement {
-  type: 'definition'
-}
-
-export interface Statement extends DefinitionOrStatement {
-  type: 'statement'
-  proofs: string[] // to be implemented
-}
-
-export interface MathDocument {
-  id: string
-}
-
-interface Entity<EntityType> {
-  byId: Dictionary<EntityType>
-  allIds: string[]
-}
+import { Definition, Statement, Graph, MathDocument } from './types'
+import { Entity } from '../../types'
 
 export interface MathState {
   entities: {
@@ -59,9 +19,6 @@ export interface MathState {
   ui: {
     highlighted: string
     selected: string
-  }
-  search: {
-    query: string
   }
 }
 
@@ -79,9 +36,6 @@ const initialState: MathState = {
   ui: {
     highlighted: '',
     selected: '',
-  },
-  search: {
-    query: '',
   },
 }
 
@@ -112,9 +66,6 @@ export const mathSlice = createSlice({
     select: (state, action: PayloadAction<string>) => {
       state.ui.selected = action.payload
     },
-    setSearch: (state, action: PayloadAction<string>) => {
-      state.search.query = action.payload
-    },
   },
   extraReducers: builder => {
     builder
@@ -138,28 +89,10 @@ export const mathSlice = createSlice({
   },
 })
 
-export const { highlight, select, setSearch } = mathSlice.actions
+export const { highlight, select } = mathSlice.actions
 
 // Selectors
 const selectGraphNodes = (state: RootState) => state.math.entities.node
-
-interface EnrichedDefinition
-  extends Omit<Definition, 'dependents' | 'dependencies' | 'id'> {
-  uri: string
-  dependents: Dictionary<EnrichedDefinition | EnrichedStatement>
-  dependencies: Dictionary<EnrichedDefinition | EnrichedStatement>
-}
-
-interface EnrichedStatement
-  extends Omit<Statement, 'dependents' | 'dependencies' | 'id'> {
-  uri: string
-  dependents: Dictionary<EnrichedDefinition | EnrichedStatement>
-  dependencies: Dictionary<EnrichedDefinition | EnrichedStatement>
-}
-
-export type GraphNode = EnrichedDefinition | EnrichedStatement
-
-export type Graph = Dictionary<GraphNode>
 
 export const selectGraph = createSelector(selectGraphNodes, ({ byId }) => {
   const enrichedNodes: Graph = Object.fromEntries(
@@ -190,8 +123,6 @@ export const selectPrunedGraph = createSelector(selectGraph, graph =>
   prune(graph),
 )
 
-export const selectSearch = (state: RootState) => state.math.search.query
-
 export const selectHighlighted = (state: RootState) => state.math.ui.highlighted
 export const selectSelected = (state: RootState) => state.math.ui.selected
 
@@ -202,25 +133,6 @@ export const selectSelectedNodeDependencies = createSelector(
   selectSelected,
   selectGraph,
   selectNodeDependencies,
-)
-
-export const selectSearchResults = createSelector(
-  selectSearch,
-  selectGraph,
-  (query: string, graph: Graph): { label: string; value: string }[] => {
-    if (query.length < 2) return []
-    return Object.values(graph)
-      .filter(
-        ({ label }) => label.en.toLowerCase().includes(query.toLowerCase()),
-        //*|| uri.toLowerCase().includes(query.toLowerCase()),
-      )
-      .sort(
-        ({ dependents: a }, { dependents: b }) =>
-          Object.values(b).length - Object.values(a).length,
-      )
-      .map(({ uri, label: { en: label } }) => ({ value: uri, label }))
-      .slice(0, 10)
-  },
 )
 
 export const selectSelectedNode = createSelector(

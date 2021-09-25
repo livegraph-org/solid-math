@@ -8,7 +8,7 @@ import {
   IriString,
 } from '@inrupt/solid-client'
 import { solid, foaf } from 'rdf-namespaces'
-import { Dictionary } from './app/types'
+import { Dictionary } from './types'
 
 // following https://github.com/solid/solid/blob/main/proposals/data-discovery.md to discover math documents of a user
 export const findMathDocumentsOfPerson = async (
