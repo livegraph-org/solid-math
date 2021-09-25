@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { RootState } from '../../app/store'
+import { addDocuments } from '../math/mathSlice'
 import * as api from './loginAPI'
 
 // State
@@ -16,16 +17,18 @@ const initialState: LoginState = {
 }
 
 // Thunks
-export const init = createAsyncThunk('login/init', async () => {
+export const init = createAsyncThunk('login/init', async (_, { dispatch }) => {
   const response = await api.init()
-  return response
+  const webId = response?.webId ?? ''
+  const isLoggedIn = response?.isLoggedIn ?? false
+  dispatch(addDocuments(webId))
+  return { webId, isLoggedIn }
 })
 
 export const login = createAsyncThunk(
   'login/login',
   async (oidcIssuer: string) => {
-    const response = await api.login(oidcIssuer)
-    return response
+    await api.login(oidcIssuer)
   },
 )
 
@@ -45,8 +48,8 @@ export const loginSlice = createSlice({
       })
       .addCase(init.fulfilled, (state, action) => {
         state.status = 'idle'
-        state.webId = action.payload?.webId ?? ''
-        state.isLoggedIn = action.payload?.isLoggedIn ?? false
+        state.webId = action.payload.webId
+        state.isLoggedIn = action.payload.isLoggedIn
       })
       .addCase(login.pending, state => {
         state.status = 'loading'

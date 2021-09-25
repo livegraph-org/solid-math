@@ -88,8 +88,9 @@ const initialState: MathState = {
 // Thunks
 export const addDocuments = createAsyncThunk(
   'math/addDocuments',
-  async (webId: string) => {
+  async (webId: string, { dispatch }) => {
     const documents = await api.findMathDocumentsOfPerson(webId)
+    documents.forEach(doc => dispatch(addGraph(doc)))
     return documents
   },
 )
