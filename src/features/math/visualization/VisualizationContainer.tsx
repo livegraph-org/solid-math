@@ -9,7 +9,7 @@ import {
 } from '../mathSlice'
 import Simulation from './simulation'
 import { SimulationGraph, SimulationLink } from './simulation/types'
-import { Vector } from './types'
+import { Matrix, Vector } from './types'
 import numeric from 'numeric'
 import Statement from '../Statement'
 import Search from '../Search'
@@ -39,7 +39,7 @@ const VisualizationContainer: React.FC = props => {
     links: [],
   })
   // transformation matrix
-  const [matrix, setMatrix] = useState<number[][]>([
+  const [matrix, setMatrix] = useState<Matrix>([
     [1, 0, 0],
     [0, 1, 0],
     [0, 0, 1],
@@ -87,8 +87,8 @@ const VisualizationContainer: React.FC = props => {
     simulation.update({ nodes, links })
   }, [prunedGraph, simulation])
 
-  const handleTransform = (matrix: number[][]): void => {
-    setMatrix(prevMatrix => numeric.dot(matrix, prevMatrix) as number[][])
+  const handleTransform = (matrix: Matrix): void => {
+    setMatrix(prevMatrix => numeric.dot(matrix, prevMatrix) as Matrix)
   }
 
   const withNode = (action: (uri: string) => unknown) => {

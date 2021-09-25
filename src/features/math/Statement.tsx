@@ -1,7 +1,40 @@
 import React from 'react'
-import { GraphNode, select, selectSelectedNode } from './mathSlice'
+import { GraphNode, highlight, select, selectSelectedNode } from './mathSlice'
 import Math from './Math'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
+
+interface NodeListProps {
+  title: string
+  nodes: GraphNode[]
+}
+
+const NodeList: React.FC<NodeListProps> = ({ title, nodes }: NodeListProps) => {
+  const dispatch = useAppDispatch()
+  return (
+    <>
+      <header className="card-header">
+        <p className="card-header-title">
+          {title}: {nodes.length}
+        </p>
+      </header>
+      <section className="card-content">
+        <ul className="buttons are-small">
+          {nodes.map(node => (
+            <li
+              onClick={() => dispatch(select(node.uri))}
+              onMouseEnter={() => dispatch(highlight(node.uri))}
+              onMouseLeave={() => dispatch(highlight(''))}
+              key={node.uri}
+              className="button is-link is-inverted"
+            >
+              {node.label.en}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  )
+}
 
 const Statement = () => {
   const dispatch = useAppDispatch()
@@ -30,38 +63,8 @@ const Statement = () => {
       <section className="card-content">
         <Math>{node.description.en}</Math>
       </section>
-      <header className="card-header">
-        <p className="card-header-title">dependencies: {dependencies.length}</p>
-      </header>
-      <section className="card-content">
-        <ul className="buttons are-small">
-          {dependencies.map(dependency => (
-            <li
-              onClick={() => onSelectNode(dependency.uri)}
-              key={dependency.uri}
-              className="button is-link is-inverted"
-            >
-              {dependency.label.en}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <header className="card-header">
-        <p className="card-header-title">dependents: {dependents.length}</p>
-      </header>
-      <section className="card-content">
-        <ul className="buttons are-small">
-          {dependents.map(dependent => (
-            <li
-              onClick={() => onSelectNode(dependent.uri)}
-              key={dependent.uri}
-              className="button is-link is-inverted"
-            >
-              {dependent.label.en}
-            </li>
-          ))}
-        </ul>
-      </section>
+      <NodeList title="dependencies" nodes={dependencies} />
+      <NodeList title="dependents" nodes={dependents} />
     </div>
   )
 }

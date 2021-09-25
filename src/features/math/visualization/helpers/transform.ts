@@ -1,14 +1,11 @@
-import { Grid, Vector } from '../types'
+import { Grid, Matrix, Vector } from '../types'
 import { VisualizationGraph } from '../types'
 import { GraphNode } from '../../mathSlice'
 import { SimulationGraph } from '../simulation/types'
 import numeric from 'numeric'
 
-export const transform = (matrix: number[][], vector: Vector): Vector => {
-  const raw = numeric.dot(
-    matrix,
-    numeric.transpose([[...vector, 1]]),
-  ) as number[][]
+export const transform = (matrix: Matrix, vector: Vector): Vector => {
+  const raw = numeric.dot(matrix, numeric.transpose([[...vector, 1]])) as Matrix
   const [[x], [y]] = raw
   return [x, y]
 }
@@ -25,7 +22,7 @@ export const basicGrid: Grid = {
   highlight: 5,
 }
 
-export const transformGrid = (matrix: number[][], grid: Grid): Grid => {
+export const transformGrid = (matrix: Matrix, grid: Grid): Grid => {
   let distance = grid.distance * matrix[0][0]
   while (distance < 20) {
     distance *= 5
@@ -38,7 +35,7 @@ export const transformGrid = (matrix: number[][], grid: Grid): Grid => {
 }
 
 export const transformLayout = (
-  matrix: number[][],
+  matrix: Matrix,
   graph: SimulationGraph,
   highlighted: string,
   selected: string,
@@ -52,6 +49,10 @@ export const transformLayout = (
     }),
   )
 
+  selectedDependencies.forEach(
+    uri => (transformedNodesDict[uri].style = 'focus2'),
+  )
+
   if (highlighted) {
     transformedNodesDict[highlighted].style = 'accent'
   }
@@ -59,10 +60,6 @@ export const transformLayout = (
   if (selected) {
     transformedNodesDict[selected].style = 'focus'
   }
-
-  selectedDependencies.forEach(
-    uri => (transformedNodesDict[uri].style = 'accent'),
-  )
 
   const links = graph.links.map(link => {
     const sourceUri =

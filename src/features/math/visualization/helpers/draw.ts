@@ -1,8 +1,9 @@
-import { Vector, Grid } from '../types'
+import { Vector, Grid, VisualizationGraph } from '../types'
+import numeric from 'numeric'
 
 type Options = Partial<CanvasRenderingContext2D>
 
-export const drawText = (
+const drawText = (
   context: CanvasRenderingContext2D,
   [x, y]: Vector,
   text: string,
@@ -16,7 +17,7 @@ export const drawText = (
   context.fillText(text, x, y)
 }
 
-export const drawCircle = (
+const drawCircle = (
   context: CanvasRenderingContext2D,
   [x, y]: Vector,
   radius: number,
@@ -28,7 +29,7 @@ export const drawCircle = (
   context.fill()
 }
 
-export const drawLine = (
+const drawLine = (
   context: CanvasRenderingContext2D,
   start: Vector,
   end: Vector,
@@ -40,6 +41,90 @@ export const drawLine = (
   context.moveTo(...start)
   context.lineTo(...end)
   context.stroke()
+}
+
+export const drawGraph = (
+  context: CanvasRenderingContext2D,
+  graph: VisualizationGraph,
+) => {
+  graph.links.forEach(link => {
+    // we're counting a unit vector to make links that don't overlap nodes
+    // source point
+    const s = [link.source.x, link.source.y]
+    // target point
+    const t = [link.target.x, link.target.y]
+    // vector
+    const v = numeric.sub(t, s)
+    // vector size
+    const size = Math.sqrt(v[0] ** 2 + v[1] ** 2)
+    // unit vector
+    const i = numeric.div(v, size)
+    drawLine(
+      context,
+      // links don't overlap circles
+      numeric.add(s, numeric.mul(i, link.source.r)) as Vector,
+      numeric.sub(t, numeric.mul(i, link.target.r)) as Vector,
+      {
+        strokeStyle: 'white',
+        lineWidth: 0.5,
+      },
+    )
+  })
+
+  const color = {
+    accent: 'violet',
+    focus: 'red',
+    focus2: 'pink',
+    rest: {
+      node: '#fff8',
+      label: '#fff4',
+    },
+  }
+
+  const accented = graph.nodes.filter(({ style }) => style === 'accent')
+  const focused = graph.nodes.filter(({ style }) => style === 'focus')
+  const focused2 = graph.nodes.filter(({ style }) => style === 'focus2')
+  const rest = graph.nodes.filter(({ style }) => !style)
+
+  // draw all the nodes which are not special
+  rest.forEach(({ x, y, r }) =>
+    drawCircle(context, [x, y], r, { fillStyle: color.rest.node }),
+  )
+
+  rest.forEach(({ x, y, r, label }) =>
+    drawText(context, [x + r + 5, y], label, {
+      fillStyle: color.rest.label,
+    }),
+  )
+
+  // draw focused nodes
+  focused2.forEach(({ x, y, r }) =>
+    drawCircle(context, [x, y], r, { fillStyle: color.focus2 }),
+  )
+
+  focused2.forEach(({ x, y, r, label }) =>
+    drawText(context, [x + r + 5, y], label, { fillStyle: color.focus2 }),
+  )
+
+  // draw focused nodes
+  focused.forEach(({ x, y, r }) =>
+    drawCircle(context, [x, y], r, { fillStyle: color.focus }),
+  )
+
+  focused.forEach(({ x, y, r, label }) =>
+    drawText(context, [x + r + 5, y], label, { fillStyle: color.focus }),
+  )
+
+  // draw accented nodes
+  accented.forEach(({ x, y, r }) =>
+    drawCircle(context, [x, y], r, { fillStyle: color.accent }),
+  )
+
+  accented.forEach(({ x, y, r, label }) =>
+    drawText(context, [x + r + 5, y], label, {
+      fillStyle: color.accent,
+    }),
+  )
 }
 
 export const drawGrid = (

@@ -1,21 +1,21 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { drawGrid, drawCircle, drawLine, drawText } from './helpers/draw'
+import { drawGrid, drawGraph } from './helpers/draw'
 import classnames from 'classnames'
 import { drag } from 'd3-drag'
 import { zoom } from 'd3-zoom'
 import { select } from 'd3-selection'
 import numeric from 'numeric'
-import { VisualizationGraph, Vector, Grid } from './types'
+import { VisualizationGraph, Vector, Grid, Matrix } from './types'
 
 type Props = Partial<React.CanvasHTMLAttributes<HTMLCanvasElement>> & {
   graph: VisualizationGraph
   grid: Grid
-  onTransform: (matrix: number[][]) => void
+  onTransform: (matrix: Matrix) => void
   onHover: (position: Vector) => void
   onSelectNode: (position: Vector) => void
 }
 
-let old: number[][]
+let old: Matrix
 
 const Visualization: React.FC<Props> = ({
   graph,
@@ -40,65 +40,7 @@ const Visualization: React.FC<Props> = ({
         context.translate(...offset)
         context.clearRect(-offset[0], -offset[1], width, height)
         drawGrid(context, grid, width, height, offset)
-        graph.links.forEach(link => {
-          // we're counting a unit vector to make links that don't overlap nodes
-          // source point
-          const s = [link.source.x, link.source.y]
-          // target point
-          const t = [link.target.x, link.target.y]
-          // vector
-          const v = numeric.sub(t, s)
-          // vector size
-          const size = Math.sqrt(v[0] ** 2 + v[1] ** 2)
-          // unit vector
-          const i = numeric.div(v, size)
-          drawLine(
-            context,
-            // links don't overlap circles
-            numeric.add(s, numeric.mul(i, link.source.r)) as Vector,
-            numeric.sub(t, numeric.mul(i, link.target.r)) as Vector,
-            {
-              strokeStyle: 'white',
-              lineWidth: 0.5,
-            },
-          )
-        })
-
-        const accentedColor = 'violet' // '#ff5d'
-        const focusedColor = 'red'
-        const accented = graph.nodes.filter(({ style }) => style === 'accent')
-        const focused = graph.nodes.filter(({ style }) => style === 'focus')
-        const rest = graph.nodes.filter(({ style }) => !style)
-
-        // draw all the nodes which are not special
-        rest.forEach(({ x, y, r }) =>
-          drawCircle(context, [x, y], r, { fillStyle: '#fff8' }),
-        )
-
-        rest.forEach(({ x, y, r, label }) =>
-          drawText(context, [x + r + 5, y], label, { fillStyle: '#fff4' }),
-        )
-
-        // draw accented nodes
-        accented.forEach(({ x, y, r }) =>
-          drawCircle(context, [x, y], r, { fillStyle: accentedColor }),
-        )
-
-        accented.forEach(({ x, y, r, label }) =>
-          drawText(context, [x + r + 5, y], label, {
-            fillStyle: accentedColor,
-          }),
-        )
-
-        // draw accented nodes
-        focused.forEach(({ x, y, r }) =>
-          drawCircle(context, [x, y], r, { fillStyle: focusedColor }),
-        )
-
-        focused.forEach(({ x, y, r, label }) =>
-          drawText(context, [x + r + 5, y], label, { fillStyle: focusedColor }),
-        )
-
+        drawGraph(context, graph)
         return () => context.restore()
       }
     }
@@ -156,7 +98,7 @@ const Visualization: React.FC<Props> = ({
               [0, 0, 1],
             ]
 
-            const transform = numeric.dot(zoom, numeric.inv(old)) as number[][]
+            const transform = numeric.dot(zoom, numeric.inv(old)) as Matrix
             old = zoom
 
             onTransform(transform)

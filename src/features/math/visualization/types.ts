@@ -19,6 +19,8 @@ export type VisualizationGraph = {
 
 export type Vector = [number, number]
 
+export type Matrix = number[][]
+
 export type Grid = {
   origin: Vector // coordinate of the origin
   distance: number // distance between lines
