@@ -3,6 +3,7 @@ import Login from '../features/login/Login'
 import VisualizationContainer from '../features/math/visualization/VisualizationContainer'
 import styled from 'styled-components'
 import About from './About'
+import ControlPanel from '../features/control/ControlPanel'
 
 const PositionedLogin = styled(Login)`
   position: fixed;
@@ -17,6 +18,12 @@ const PositionedAbout = styled(About)`
   right: 1rem;
 `
 
+const PositionedControlPanel = styled(ControlPanel)`
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+`
+
 const FullSizeVisualization = styled(VisualizationContainer)`
   height: 100vh;
   width: 100vw;
@@ -29,6 +36,8 @@ const Layout: React.FC = () => {
       <PositionedLogin />
 
       <PositionedAbout />
+
+      <PositionedControlPanel />
 
       <FullSizeVisualization />
     </>

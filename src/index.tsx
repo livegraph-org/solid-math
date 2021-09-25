@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import './index.scss'
+import './fonts/fontello/css/fontello.css'
 import App from './App'
 import { store } from './app/store'
 import reportWebVitals from './reportWebVitals'

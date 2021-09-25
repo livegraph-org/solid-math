@@ -53,7 +53,7 @@ export const transformLayout = (
     uri => (transformedNodesDict[uri].style = 'focus2'),
   )
 
-  if (highlighted) {
+  if (highlighted && transformedNodesDict[highlighted]) {
     transformedNodesDict[highlighted].style = 'accent'
   }
 
