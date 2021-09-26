@@ -19,7 +19,6 @@ const ControlPanel: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
     <AddButtonWithMenu
       buttonProps={{}}
       menuProps={{
-        onAddDocument: () => console.log('add document'),
         onAddMath: () => console.log('add math'),
       }}
     />

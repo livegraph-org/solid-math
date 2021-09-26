@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 type WithMenuHOC = <ButtonProps, MenuProps>(
   Button: React.FC<ButtonProps>,
-  Menu: React.FC<MenuProps>,
+  Menu: React.FC<MenuProps & CloseHandler>,
 ) => React.FC<
   React.HTMLAttributes<HTMLDivElement> & {
     buttonProps: ButtonProps
@@ -11,12 +11,16 @@ type WithMenuHOC = <ButtonProps, MenuProps>(
   }
 >
 
+interface CloseHandler {
+  onClickClose: () => void
+}
+
 const withMenu: WithMenuHOC = <
   ButtonProps extends React.HTMLAttributes<HTMLElement>,
   MenuProps extends React.HTMLAttributes<HTMLElement>,
 >(
   Button: React.FC<ButtonProps>,
-  Menu: React.FC<MenuProps>,
+  Menu: React.FC<MenuProps & CloseHandler>,
 ) => {
   const HOC = ({
     buttonProps,
@@ -52,16 +56,21 @@ const withMenu: WithMenuHOC = <
           onMouseEnter={() => setOpen(true)}
           onFocus={() => setOpen(true)}
         />
-        {open && (
-          <div style={{ position: 'relative', width: 0, height: 0 }}>
-            <div
-              className="box p-0"
-              style={{ position: 'absolute', right: 0, overflow: 'hidden' }}
-            >
-              <Menu {...menuProps} />
-            </div>
+        <div
+          style={{
+            position: 'relative',
+            width: 0,
+            height: 0,
+            visibility: open ? 'visible' : 'hidden',
+          }}
+        >
+          <div
+            className="box p-0"
+            style={{ position: 'absolute', right: 0, overflow: 'hidden' }}
+          >
+            <Menu {...menuProps} onClickClose={() => setOpen(false)} />
           </div>
-        )}
+        </div>
       </div>
     )
   }

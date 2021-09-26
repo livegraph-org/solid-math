@@ -47,7 +47,12 @@ const Login = ({ ...props }) => {
   ) : (
     <LoginPrompt
       {...props}
-      onLogin={oidcIssuer => dispatch(login(oidcIssuer))}
+      contentProps={{
+        onLogin: (oidcIssuer: string) => {
+          dispatch(login(oidcIssuer))
+        },
+      }}
+      buttonProps={{}}
     />
   )
 }
