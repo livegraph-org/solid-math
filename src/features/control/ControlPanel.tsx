@@ -1,5 +1,6 @@
 import React from 'react'
 import AppButton from '../../components/AppButton'
+import AddButtonWithMenu from './AddButtonWithMenu'
 
 const ControlPanel: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
@@ -14,11 +15,14 @@ const ControlPanel: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
     <AppButton onClick={() => alert('document control not implemented')}>
       <i className="icon icon-document" aria-label="documents" />
     </AppButton>
-    <AppButton
-      onClick={() => alert('adding documents and math not implemented')}
-    >
-      <i className="icon icon-plus" aria-label="add" />
-    </AppButton>
+
+    <AddButtonWithMenu
+      buttonProps={{}}
+      menuProps={{
+        onAddDocument: () => console.log('add document'),
+        onAddMath: () => console.log('add math'),
+      }}
+    />
   </div>
 )
 
