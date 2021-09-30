@@ -2,6 +2,7 @@ import React from 'react'
 import withMenu from '../../components/withMenu'
 import AppButton from '../../components/AppButton'
 import withModal from '../../components/withModal'
+import AddDocument from '../document/AddDocument'
 
 const AddButton = ({ ...props }) => (
   <AppButton {...props}>
@@ -14,9 +15,8 @@ interface MenuProps {
 }
 
 const Button = ({ ...props }) => <a {...props}>Add Document</a>
-const ModalContent = () => <div>Modal Content</div>
 
-const AddDocument = withModal(Button, ModalContent, 'Add a document')
+const AddDocumentButton = withModal(Button, AddDocument, 'Add a document')
 
 const Menu = ({
   onAddMath,
@@ -25,7 +25,7 @@ const Menu = ({
   <div className="menu box p-0">
     <ul className="menu-list">
       <li>
-        <AddDocument buttonProps={{ onClick: onClickClose }} />
+        <AddDocumentButton buttonProps={{ onClick: onClickClose }} />
       </li>
       <li>
         <a

@@ -1,6 +1,6 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import { RootState } from '../../app/store'
-import { addDocuments } from '../math/mathSlice'
+import { addDocuments } from '../document/documentSlice'
 import * as api from './loginAPI'
 
 // State
@@ -72,6 +72,14 @@ export const loginSlice = createSlice({
 export const selectSession = (state: RootState) => ({
   webId: state.login.webId,
   isLoggedIn: state.login.isLoggedIn,
+})
+
+export const selectWebId = (state: RootState) => state.login.webId
+
+export const selectNaiveStorage = createSelector(selectWebId, webId => {
+  const output = /^(?<storage>.*)profile\/card#me$/g.exec(webId)
+  const storage = output?.groups ? output.groups.storage : ''
+  return storage
 })
 
 export const selectLoginStatus = (state: RootState) => state.login.status

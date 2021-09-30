@@ -1,6 +1,7 @@
 import React from 'react'
 import AppButton from '../../components/AppButton'
 import AddButtonWithMenu from './AddButtonWithMenu'
+import DocumentControl from './DocumentControl'
 
 const ControlPanel: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
@@ -12,9 +13,8 @@ const ControlPanel: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
     >
       <i className="icon icon-users" />
     </AppButton>
-    <AppButton onClick={() => alert('document control not implemented')}>
-      <i className="icon icon-document" aria-label="documents" />
-    </AppButton>
+
+    <DocumentControl />
 
     <AddButtonWithMenu
       buttonProps={{}}

@@ -1,14 +1,13 @@
 import {
-  getSolidDataset,
-  UrlString,
-  getThingAll,
-  getTermAll,
-  getTerm,
-  getThing,
   asUrl,
+  getSolidDataset,
+  getTerm,
+  getTermAll,
+  getThingAll,
+  UrlString,
 } from '@inrupt/solid-client'
 import { fetch } from '@inrupt/solid-client-authn-browser'
-import { rdf, rdfs, solid } from 'rdf-namespaces'
+import { rdf, rdfs } from 'rdf-namespaces'
 import { Definition, Statement } from './types'
 
 interface Graph {
@@ -63,31 +62,4 @@ export const fetchGraph = async (uri: UrlString): Promise<Graph> => {
     )
   })
   return graph
-}
-
-export const findMathDocumentsOfPerson = async (
-  webId: string,
-): Promise<string[]> => {
-  if (webId) {
-    const dataset = await getSolidDataset(webId, { fetch })
-    const me = getThing(dataset, webId)
-    if (me) {
-      const publicTypeIndex = getTerm(me, solid.publicTypeIndex)?.value
-      if (publicTypeIndex) {
-        const index = await getSolidDataset(publicTypeIndex, { fetch })
-        const things = getThingAll(index)
-        const mathDocuments = things
-          .filter(thing =>
-            getTermAll(thing, solid.forClass)
-              .map(a => a.value)
-              .includes('https://terms.math.livegraph.org#Definition'),
-          )
-          .map(thing => getTermAll(thing, solid.instance))
-          .flat()
-          .map(a => a.value)
-        return mathDocuments
-      }
-    }
-  }
-  return ['https://mrkvon.solidcommunity.net/public/math/graph-theory.ttl']
 }

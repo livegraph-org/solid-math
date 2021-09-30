@@ -40,15 +40,6 @@ const initialState: MathState = {
 }
 
 // Thunks
-export const addDocuments = createAsyncThunk(
-  'math/addDocuments',
-  async (webId: string, { dispatch }) => {
-    const documents = await api.findMathDocumentsOfPerson(webId)
-    documents.forEach(doc => dispatch(addGraph(doc)))
-    return documents
-  },
-)
-
 export const addGraph = createAsyncThunk(
   'math/addGraph',
   async (uri: string) => {
@@ -68,24 +59,17 @@ export const mathSlice = createSlice({
     },
   },
   extraReducers: builder => {
-    builder
-      .addCase(addDocuments.fulfilled, (state, action) => {
-        state.entities.document = {
-          byId: Object.fromEntries(action.payload.map(id => [id, { id }])),
-          allIds: action.payload,
-        }
+    builder.addCase(addGraph.fulfilled, (state, action) => {
+      const { nodes, links } = action.payload
+      nodes.forEach(node => {
+        state.entities.node.byId[node.id] = node
+        state.entities.node.allIds.push(node.id)
       })
-      .addCase(addGraph.fulfilled, (state, action) => {
-        const { nodes, links } = action.payload
-        nodes.forEach(node => {
-          state.entities.node.byId[node.id] = node
-          state.entities.node.allIds.push(node.id)
-        })
-        links.forEach(([dependent, dependency]) => {
-          state.entities.node.byId[dependent].dependencies.push(dependency)
-          state.entities.node.byId[dependency].dependents.push(dependent)
-        })
+      links.forEach(([dependent, dependency]) => {
+        state.entities.node.byId[dependent].dependencies.push(dependency)
+        state.entities.node.byId[dependency].dependents.push(dependent)
       })
+    })
   },
 })
 

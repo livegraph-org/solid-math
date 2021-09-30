@@ -3,6 +3,9 @@ import React from 'react'
 import { useState } from 'react'
 import Modal from 'react-modal'
 
+// TODO maybe we don't need to use react-modal,
+// maybe bulma modal will be sufficient
+
 type WithModalHOC = <ButtonProps, ContentProps>(
   Button: React.FC<ButtonProps>,
   Content: React.FC<ContentProps>,
@@ -54,7 +57,7 @@ const withModal: WithModalHOC = <
           <Modal
             isOpen={promptOpen}
             onRequestClose={() => setPromptOpen(false)}
-            contentLabel="Connect your Solid Pod"
+            contentLabel={finalTitle}
             overlayClassName={{
               base: 'modal modal-background is-active',
               afterOpen: '',
@@ -79,7 +82,10 @@ const withModal: WithModalHOC = <
                 <p className="card-header-title">{finalTitle}</p>
               </header>
               <div className="card-content">
-                <Content {...contentProps} />
+                <Content
+                  {...contentProps}
+                  onFinish={() => setPromptOpen(false)}
+                />
               </div>
             </div>
           </Modal>
