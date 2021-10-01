@@ -32,6 +32,8 @@ export interface DependencyExtended {
 }
 */
 
+import { EffectiveAccess } from '@inrupt/solid-client/dist/interfaces'
+import { StringMappingType } from 'typescript'
 import { Dictionary } from '../../types'
 
 interface LanguageString extends Dictionary<string> {
@@ -68,6 +70,8 @@ export interface Statement extends DefinitionOrStatement {
 
 export interface MathDocument {
   id: string
+  uri: string
+  access: EffectiveAccess
 }
 
 interface EnrichedDefinition

@@ -5,11 +5,18 @@ import styled from 'styled-components'
 import About from './About'
 import ControlPanel from '../features/control/ControlPanel'
 import Search from '../features/search/Search'
+import Info from '../features/info/Info'
 
 const PositionedAbout = styled(About)`
   position: fixed;
   bottom: 1rem;
   right: 1rem;
+`
+
+const PositionedInfo = styled(Info)`
+  position: fixed;
+  bottom: 0.5rem;
+  left: 0.5rem;
 `
 
 const FullSizeVisualization = styled(VisualizationContainer)`
@@ -48,6 +55,8 @@ const Layout: React.FC = () => {
       </TopNav>
 
       <PositionedAbout />
+
+      <PositionedInfo />
 
       <FullSizeVisualization />
     </>
