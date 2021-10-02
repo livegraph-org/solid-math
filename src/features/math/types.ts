@@ -33,7 +33,6 @@ export interface DependencyExtended {
 */
 
 import { EffectiveAccess } from '@inrupt/solid-client/dist/interfaces'
-import { StringMappingType } from 'typescript'
 import { Dictionary } from '../../types'
 
 interface LanguageString extends Dictionary<string> {
@@ -45,9 +44,10 @@ interface Node {
   id: string
   description: LanguageString
   label: LanguageString
-  type: string
+  type: 'definition' | 'statement'
   created: number
   updated: number
+  document: string // solid resource this node is saved at
   // there'll also be citation here
   // examples and proofs will probably extend this
   // and we need to figure out where to keep solid documents
@@ -68,24 +68,30 @@ export interface Statement extends DefinitionOrStatement {
   proofs: string[] // to be implemented
 }
 
+// we use this type for updating the node
+export interface PartialNode
+  extends Pick<DefinitionOrStatement, 'id' | 'document'>,
+    Partial<Pick<DefinitionOrStatement, 'label' | 'type'>> {}
+
 export interface MathDocument {
   id: string
   uri: string
   access: EffectiveAccess
 }
-
 interface EnrichedDefinition
-  extends Omit<Definition, 'dependents' | 'dependencies' | 'id'> {
+  extends Omit<Definition, 'dependents' | 'dependencies' | 'id' | 'document'> {
   uri: string
   dependents: Dictionary<EnrichedDefinition | EnrichedStatement>
   dependencies: Dictionary<EnrichedDefinition | EnrichedStatement>
+  document: MathDocument
 }
 
 interface EnrichedStatement
-  extends Omit<Statement, 'dependents' | 'dependencies' | 'id'> {
+  extends Omit<Statement, 'dependents' | 'dependencies' | 'id' | 'document'> {
   uri: string
   dependents: Dictionary<EnrichedDefinition | EnrichedStatement>
   dependencies: Dictionary<EnrichedDefinition | EnrichedStatement>
+  document: MathDocument
 }
 
 export type GraphNode = EnrichedDefinition | EnrichedStatement
