@@ -86,6 +86,24 @@ export const mathSlice = createSlice({
         state.entities.node.byId[node.id].label = node.label
         state.entities.node.byId[node.id].type = node.type
         state.entities.node.byId[node.id].description = node.description
+        // replace dependencies
+        const oldDependencies = state.entities.node.byId[node.id].dependencies
+        state.entities.node.byId[node.id].dependencies = node.dependencies
+        // fix dependents
+        const deletedDependencies = oldDependencies.filter(
+          d => !node.dependencies.includes(d),
+        )
+        const addedDependencies = node.dependencies.filter(
+          d => !oldDependencies.includes(d),
+        )
+        addedDependencies.forEach(d => {
+          state.entities.node.byId[d].dependents.push(node.id)
+        })
+        deletedDependencies.forEach(d => {
+          state.entities.node.byId[d].dependents = state.entities.node.byId[
+            d
+          ].dependents.filter(a => a !== node.id)
+        })
       })
   },
 })

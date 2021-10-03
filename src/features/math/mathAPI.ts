@@ -1,10 +1,13 @@
 import {
+  addUrl,
   asUrl,
   getSolidDataset,
   getTerm,
   getTermAll,
   getThing,
   getThingAll,
+  getUrlAll,
+  removeAll,
   saveSolidDatasetAt,
   setStringWithLocale,
   setThing,
@@ -71,6 +74,13 @@ export const updateNode = async (
       )
     }
 
+    if (node.dependencies) {
+      newThing = removeAll(newThing, term.dependsOn)
+      node.dependencies.forEach(depUri => {
+        newThing = addUrl(newThing, term.dependsOn, depUri)
+      })
+    }
+
     if (newThing !== thing) {
       const newDataset = setThing(dataset, newThing)
       await saveSolidDatasetAt(node.document, newDataset, { fetch })
@@ -88,6 +98,7 @@ const thingToNode = (
   const type = getTerm(thing, rdf.type)?.value ?? ''
   const description = getTerm(thing, rdf.value)?.value ?? ''
   const label = getTerm(thing, rdfs.label)?.value ?? ''
+  const dependencies = getUrlAll(thing, term.dependsOn)
   switch (type) {
     case term.definition:
       return {
@@ -95,7 +106,7 @@ const thingToNode = (
         type: 'definition',
         label: { en: label },
         description: { en: description },
-        dependencies: [],
+        dependencies,
         dependents: [],
         examples: [],
         created: 0,
@@ -108,7 +119,7 @@ const thingToNode = (
         type: 'statement',
         label: { en: label },
         description: { en: description },
-        dependencies: [],
+        dependencies,
         dependents: [],
         examples: [],
         proofs: [],
