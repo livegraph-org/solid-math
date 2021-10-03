@@ -85,6 +85,7 @@ export const mathSlice = createSlice({
         const node = action.payload
         state.entities.node.byId[node.id].label = node.label
         state.entities.node.byId[node.id].type = node.type
+        state.entities.node.byId[node.id].description = node.description
       })
   },
 })

@@ -62,6 +62,15 @@ export const updateNode = async (
       newThing = setUrl(newThing, rdf.type, term[node.type])
     }
 
+    if (node.description) {
+      newThing = setStringWithLocale(
+        newThing,
+        rdf.value,
+        node.description.en,
+        'en',
+      )
+    }
+
     if (newThing !== thing) {
       const newDataset = setThing(dataset, newThing)
       await saveSolidDatasetAt(node.document, newDataset, { fetch })

@@ -71,7 +71,12 @@ export interface Statement extends DefinitionOrStatement {
 // we use this type for updating the node
 export interface PartialNode
   extends Pick<DefinitionOrStatement, 'id' | 'document'>,
-    Partial<Pick<DefinitionOrStatement, 'label' | 'type'>> {}
+    Partial<
+      Pick<
+        DefinitionOrStatement,
+        'label' | 'type' | 'description' | 'dependencies'
+      >
+    > {}
 
 export interface MathDocument {
   id: string

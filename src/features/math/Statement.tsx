@@ -6,17 +6,120 @@ import { GraphNode } from './types'
 
 interface NodeListProps {
   title: string
+  node: GraphNode
   nodes: GraphNode[]
+  editable?: boolean
 }
 
-const NodeList: React.FC<NodeListProps> = ({ title, nodes }: NodeListProps) => {
+const NodeList: React.FC<NodeListProps> = ({
+  title,
+  node,
+  nodes,
+  editable = false,
+}: NodeListProps) => {
+  const [edit, setEdit] = useState(false)
   const dispatch = useAppDispatch()
+  return edit ? (
+    <NodeListEdit
+      title={title}
+      node={node}
+      nodes={nodes}
+      onFinish={() => setEdit(false)}
+    />
+  ) : (
+    <>
+      <header className="card-header">
+        <p className="card-header-title">
+          {title}: {nodes.length}
+        </p>
+        {node.document.access.user.write && editable && (
+          <button
+            className="card-header-icon"
+            aria-label="edit label"
+            onClick={() => setEdit(true)}
+          >
+            <i className="icon icon-edit" aria-hidden="true"></i>
+          </button>
+        )}
+      </header>
+      <section className="card-content">
+        <ul className="buttons are-small">
+          {nodes.map(node => (
+            <li
+              onClick={() => dispatch(select(node.uri))}
+              onMouseEnter={() => dispatch(highlight(node.uri))}
+              onMouseLeave={() => dispatch(highlight(''))}
+              key={node.uri}
+              className="button is-link is-inverted"
+            >
+              {node.label.en}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  )
+}
+
+const NodeListEdit = ({
+  title,
+  node,
+  nodes,
+  onFinish,
+}: {
+  title: string
+  node: GraphNode
+  nodes: GraphNode[]
+  onFinish: () => void
+}) => {
+  const [dependencies, setDependencies] = useState(node.dependencies)
+  const dispatch = useAppDispatch()
+
+  useEffect(() => {
+    setDependencies(node.dependencies)
+  }, [node])
+
+  const handleCancel = () => {
+    onFinish()
+    setDependencies(node.dependencies)
+  }
+
+  const handleSave = () => {
+    dispatch(
+      updateNode({
+        dependencies: Object.keys(dependencies),
+        id: node.uri,
+        document: node.document.id,
+      }),
+    )
+    handleCancel()
+  }
+
   return (
     <>
       <header className="card-header">
         <p className="card-header-title">
           {title}: {nodes.length}
         </p>
+        <button
+          className="card-header-icon"
+          aria-label="cancel editing"
+          title="cancel editing"
+          onClick={handleCancel}
+        >
+          <i
+            className="icon icon-cancel has-text-danger"
+            aria-hidden="true"
+          ></i>
+        </button>
+        <button
+          className="card-header-icon"
+          aria-label="save changes"
+          title="save changes"
+          onClick={handleSave}
+        >
+          <i className="icon icon-ok has-text-success" aria-hidden="true"></i>
+        </button>
       </header>
       <section className="card-content">
         <ul className="buttons are-small">
@@ -179,12 +282,102 @@ const Statement = () => {
         </span>
       </header>
       <section className="card-content">
-        <Math>{node.description.en}</Math>
+        <NodeDescription node={node} />
       </section>
-      <NodeList title="dependencies" nodes={dependencies} />
-      <NodeList title="dependents" nodes={dependents} />
+      <NodeList
+        title="dependencies"
+        node={node}
+        nodes={dependencies}
+        editable
+      />
+      <NodeList title="dependents" node={node} nodes={dependents} />
     </div>
   )
 }
 
 export default Statement
+
+const NodeDescription = ({ node }: { node: GraphNode }) => {
+  const [edit, setEdit] = useState(false)
+  return edit ? (
+    <NodeDescriptionEdit node={node} onFinish={() => setEdit(false)} />
+  ) : (
+    <>
+      <Math>{node.description.en}</Math>
+      {node.document.access.user.write && (
+        <button
+          className="card-header-icon"
+          aria-label="edit label"
+          onClick={() => setEdit(true)}
+        >
+          <i className="icon icon-edit" aria-hidden="true"></i>
+        </button>
+      )}
+    </>
+  )
+}
+
+const NodeDescriptionEdit = ({
+  node,
+  onFinish,
+}: {
+  node: GraphNode
+  onFinish: () => void
+}) => {
+  const [description, setDescription] = useState(node.description.en)
+  const dispatch = useAppDispatch()
+
+  useEffect(() => {
+    setDescription(node.description.en)
+  }, [node])
+
+  const handleCancel = () => {
+    onFinish()
+    setDescription(node.description.en)
+  }
+
+  const handleSave = () => {
+    dispatch(
+      updateNode({
+        description: { en: description },
+        id: node.uri,
+        document: node.document.id,
+      }),
+    )
+    handleCancel()
+  }
+
+  return (
+    <>
+      <span className="has-text-grey is-size-7">
+        You can use{' '}
+        <a href="https://www.markdownguide.org/basic-syntax/">Markdown</a> and{' '}
+        <a href="http://asciimath.org/">AsciiMath</a> (use $inline math$ and
+        $$multiline math$$).
+      </span>
+      <textarea
+        className="textarea"
+        placeholder="description"
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+      />
+      <Math>{description}</Math>
+      <button
+        className="card-header-icon"
+        aria-label="cancel editing"
+        title="cancel editing"
+        onClick={handleCancel}
+      >
+        <i className="icon icon-cancel has-text-danger" aria-hidden="true"></i>
+      </button>
+      <button
+        className="card-header-icon"
+        aria-label="save changes"
+        title="save changes"
+        onClick={handleSave}
+      >
+        <i className="icon icon-ok has-text-success" aria-hidden="true"></i>
+      </button>
+    </>
+  )
+}
