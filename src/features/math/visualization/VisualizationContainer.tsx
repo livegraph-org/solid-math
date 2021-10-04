@@ -1,20 +1,14 @@
+import numeric from 'numeric'
 import React, { useEffect, useState } from 'react'
-import Visualization from './Visualization'
+import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import {
   highlight,
   select,
   selectHighlighted,
+  selectPrunedGraph,
   selectSelected,
   selectSelectedNodeDependencies,
 } from '../mathSlice'
-import Simulation from './simulation'
-import { SimulationGraph, SimulationLink } from './simulation/types'
-import { Matrix, Vector } from './types'
-import numeric from 'numeric'
-import Statement from '../Statement'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
-import { selectPrunedGraph } from '../mathSlice'
-import InfoContainer from '../InfoContainer'
 import {
   basicGrid,
   nodeRadius,
@@ -22,6 +16,10 @@ import {
   transformGrid,
   transformLayout,
 } from './helpers/transform'
+import Simulation from './simulation'
+import { SimulationGraph, SimulationLink } from './simulation/types'
+import { Matrix, Vector } from './types'
+import Visualization from './Visualization'
 
 const VisualizationContainer: React.FC = props => {
   const prunedGraph = useAppSelector(selectPrunedGraph)
@@ -99,8 +97,14 @@ const VisualizationContainer: React.FC = props => {
     }
   }
 
-  const handleHover = withNode(uri => dispatch(highlight(uri)))
-  const handleSelect = withNode(uri => dispatch(select(uri)))
+  const handleHover = withNode(
+    // limit the amount of highlight actions
+    // fire only when there is a uri change
+    uri => highlightedNode !== uri && dispatch(highlight(uri)),
+  )
+  const handleSelect = withNode(
+    uri => selectedNode !== uri && dispatch(select(uri)),
+  )
 
   // transform layout to TransformedLayout
   const transformedLayout = transformLayout(
@@ -114,21 +118,14 @@ const VisualizationContainer: React.FC = props => {
   const grid = transformGrid(matrix, basicGrid)
 
   return (
-    <>
-      <Visualization
-        graph={transformedLayout}
-        grid={grid}
-        onTransform={handleTransform}
-        onHover={handleHover}
-        onSelectNode={handleSelect}
-        {...props}
-      />
-
-      {
-        // @TODO maybe move this stuff out, it's more of a Layout component
-      }
-      <InfoContainer>{selectedNode && <Statement />}</InfoContainer>
-    </>
+    <Visualization
+      graph={transformedLayout}
+      grid={grid}
+      onTransform={handleTransform}
+      onHover={handleHover}
+      onSelectNode={handleSelect}
+      {...props}
+    />
   )
 }
 

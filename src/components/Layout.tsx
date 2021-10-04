@@ -6,6 +6,8 @@ import About from './About'
 import ControlPanel from '../features/control/ControlPanel'
 import Search from '../features/search/Search'
 import Info from '../features/info/Info'
+import Statement from '../features/math/statement/Statement'
+import InfoContainer from '../features/math/InfoContainer'
 
 const PositionedAbout = styled(About)`
   position: fixed;
@@ -37,6 +39,12 @@ const TopNav = styled.nav`
   padding: 1rem;
 `
 
+const PositionedStatement = () => (
+  <InfoContainer>
+    <Statement />
+  </InfoContainer>
+)
+
 const Layout: React.FC = () => {
   return (
     <>
@@ -57,6 +65,8 @@ const Layout: React.FC = () => {
       <PositionedAbout />
 
       <PositionedInfo />
+
+      <PositionedStatement />
 
       <FullSizeVisualization />
     </>
