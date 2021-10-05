@@ -1,6 +1,7 @@
 import {
   addUrl,
   asUrl,
+  buildThing,
   getSolidDataset,
   getTerm,
   getTermAll,
@@ -12,13 +13,14 @@ import {
   setStringWithLocale,
   setThing,
   setUrl,
+  SolidDataset,
   Thing,
   ThingPersisted,
   UrlString,
 } from '@inrupt/solid-client'
 import { fetch } from '@inrupt/solid-client-authn-browser'
 import { rdf, rdfs } from 'rdf-namespaces'
-import { Definition, PartialNode, Statement } from './types'
+import { Definition, NewNode, PartialNode, Statement } from './types'
 
 interface Graph {
   nodes: (Definition | Statement)[]
@@ -88,6 +90,58 @@ export const updateNode = async (
     return thingToNode(newThing, node.document)
   }
   throw new Error('node to update not found')
+}
+
+export const createNode = async (
+  node: NewNode,
+): Promise<Definition | Statement> => {
+  console.log(node)
+  // we want to save any partial data that are provided
+  // so how do we do it?
+
+  // save a label
+
+  const dataset = await getSolidDataset(node.document, { fetch })
+
+  const uri = getUnusedUri(node.document, dataset, node.label.en)
+
+  const newThingBuilder = buildThing({ url: uri })
+    .setStringWithLocale(rdfs.label, node.label.en, 'en')
+    .setUrl(rdf.type, term[node.type])
+    .setStringWithLocale(rdf.value, node.description.en, 'en')
+
+  node.dependencies.forEach(depUri => {
+    newThingBuilder.addUrl(term.dependsOn, depUri)
+  })
+
+  const newThing = newThingBuilder.build()
+
+  const newDataset = setThing(dataset, newThing)
+  await saveSolidDatasetAt(node.document, newDataset, { fetch })
+  return thingToNode(newThing, node.document)
+}
+
+const label2uri = (label: string) =>
+  label
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9.\s_-]/g, '')
+    .trim()
+    .replace(/\s/g, '_')
+    .replace(/\./g, '_')
+
+const getUnusedUri = (
+  document: string,
+  dataset: SolidDataset,
+  label: string,
+) => {
+  const initialUri = `${document}#${label2uri(label)}`
+  const getUri = (i: number) => (i > 0 ? `${initialUri}_${i}` : initialUri)
+  let i = 0
+  while (getThing(dataset, getUri(i))) {
+    i++
+  }
+  return getUri(i)
 }
 
 const thingToNode = (

@@ -99,6 +99,23 @@ export const selectDocuments = createSelector(
   ({ byId, allIds }) => allIds.map(id => byId[id]),
 )
 
+// this is a factory function
+// say what type of access you want to select documents with
+// and it returns the correct selector
+export const createSelectDocumentsWithAccess = (
+  access: (keyof MathDocument['access']['user'])[],
+) => {
+  return createSelector(selectDocuments, documents =>
+    documents.filter(doc => access.some(a => doc.access.user[a])),
+  )
+}
+
+// select documents that are editable and appendable
+export const selectWriteAppendDocuments = createSelectDocumentsWithAccess([
+  'write',
+  'append',
+])
+
 export const selectSelectedDocument = (state: RootState) =>
   state.document.selected
 

@@ -1,29 +1,22 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { GraphNode } from '../types'
 
 interface EditProps {
-  value: GraphNode['type']
-  onChange: (type: GraphNode['type']) => void
+  value: GraphNode['type'] | ''
+  onChange: (type: GraphNode['type'] | '') => void
 }
 
 export const NodeTypeEdit = ({ value, onChange }: EditProps) => {
-  const [edit, setEdit] = useState(false)
-
   const availableTypes: GraphNode['type'][] = ['definition', 'statement']
-
-  const handleSelectTag = (type: GraphNode['type']) => {
-    setEdit(false)
-    onChange(type)
-  }
 
   return (
     <div className="tags">
-      {edit ? (
+      {!value ? (
         availableTypes.map(type => (
           <span
             key={type}
             className="tag is-info is-light"
-            onClick={() => handleSelectTag(type)}
+            onClick={() => onChange(type)}
           >
             {type}
           </span>
@@ -33,7 +26,7 @@ export const NodeTypeEdit = ({ value, onChange }: EditProps) => {
           {value}
           <button
             className="delete is-small"
-            onClick={() => setEdit(true)}
+            onClick={() => onChange('')}
           ></button>
         </span>
       )}

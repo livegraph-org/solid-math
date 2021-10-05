@@ -75,6 +75,7 @@ export const selectSession = (state: RootState) => ({
 })
 
 export const selectWebId = (state: RootState) => state.login.webId
+export const selectIsLoggedIn = (state: RootState) => state.login.isLoggedIn
 
 export const selectNaiveStorage = createSelector(selectWebId, webId => {
   const output = /^(?<storage>.*)profile\/card#me$/g.exec(webId)

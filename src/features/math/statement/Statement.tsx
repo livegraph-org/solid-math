@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
-import { useEffect } from 'react'
-import { useAppSelector } from '../../../app/hooks'
-import { selectSelected } from '../mathSlice'
+import React, { useEffect, useState } from 'react'
+import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { createMath, selectCreateMath, selectSelected } from '../mathSlice'
 import StatementEdit from './StatementEdit'
 import StatementView from './StatementView'
 
@@ -10,11 +9,16 @@ import StatementView from './StatementView'
 const Statement = () => {
   const [edit, setEdit] = useState(false)
   const selectedNode = useAppSelector(selectSelected)
+  const createNew = useAppSelector(selectCreateMath)
+  const dispatch = useAppDispatch()
 
   // when we switch the node, we disable editing
   useEffect(() => {
     setEdit(false)
   }, [selectedNode])
+
+  if (createNew)
+    return <StatementEdit onFinish={() => dispatch(createMath(false))} />
 
   if (!selectedNode) return null
 

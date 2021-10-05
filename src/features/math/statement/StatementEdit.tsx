@@ -1,29 +1,52 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
-import { selectSelectedNode, updateNode } from '../mathSlice'
+import {
+  selectDocument,
+  selectSelectedDocument,
+  selectWriteAppendDocuments,
+} from '../../document/documentSlice'
+import { selectWebId } from '../../login/loginSlice'
+import {
+  createNode,
+  selectCreateMath,
+  selectSelectedNode,
+  updateNode,
+} from '../mathSlice'
 import { GraphNode } from '../types'
 import { NodeDescriptionEdit } from './NodeDescription'
 import { NodeLabelEdit } from './NodeLabel'
-import { NodeTypeEdit } from './NodeType'
 import { NodeListEdit } from './NodeList'
+import { NodeTypeEdit } from './NodeType'
 
 const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
   const dispatch = useAppDispatch()
+  const isNew = useAppSelector(selectCreateMath)
   const node = useAppSelector(selectSelectedNode)
+  const availableDocuments = useAppSelector(selectWriteAppendDocuments)
+  const selectedDocument = useAppSelector(selectSelectedDocument)
+  const webId = useAppSelector(selectWebId)
 
-  const [type, setType] = useState(node.type)
-  const [label, setLabel] = useState(node.label.en)
-  const [description, setDescription] = useState(node.description.en)
+  const [type, setType] = useState<GraphNode['type'] | ''>(
+    isNew ? '' : node.type,
+  )
+  const [label, setLabel] = useState(isNew ? '' : node.label.en)
+  const [description, setDescription] = useState(
+    isNew ? '' : node.description.en,
+  )
   const [dependencies, setDependencies] = useState(
-    Object.values(node.dependencies),
+    isNew ? [] : Object.values(node.dependencies),
   )
 
+  // @TODO validation should be better than this
+  const isValid =
+    type && label && description && (selectedDocument || node.document)
+
   const setInitial = useCallback(() => {
-    setType(node.type)
-    setLabel(node.label.en)
-    setDescription(node.description.en)
-    setDependencies(Object.values(node.dependencies))
-  }, [node])
+    setType(isNew ? '' : node.type)
+    setLabel(isNew ? '' : node.label.en)
+    setDescription(isNew ? '' : node.description.en)
+    setDependencies(isNew ? [] : Object.values(node.dependencies))
+  }, [node, isNew])
 
   const handleAddNode = (node: GraphNode) => {
     setDependencies(deps => [...deps, node])
@@ -34,16 +57,30 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
   }
 
   const handleSave = () => {
-    dispatch(
-      updateNode({
-        type,
-        label: { en: label },
-        description: { en: description },
-        dependencies: dependencies.map(({ uri }) => uri),
-        id: node.uri,
-        document: node.document.id,
-      }),
-    )
+    if (!type) throw new Error('please select a type')
+    if (!label) throw new Error('please specify a label')
+    if (!description) throw new Error('please write a description')
+    if (!selectedDocument) throw new Error('please select a document')
+    isNew
+      ? dispatch(
+          createNode({
+            type,
+            label: { en: label },
+            description: { en: description },
+            dependencies: dependencies.map(({ uri }) => uri),
+            document: selectedDocument,
+          }),
+        )
+      : dispatch(
+          updateNode({
+            type,
+            label: { en: label },
+            description: { en: description },
+            dependencies: dependencies.map(({ uri }) => uri),
+            id: node.uri,
+            document: node.document.id,
+          }),
+        )
     handleCancel()
   }
 
@@ -60,13 +97,39 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
     <div className="card">
       <header className="card-header">
         <p className="card-header-title">
-          <div>
-            <div>
+          <div className="block">
+            <div className="title is-6">
+              {isNew ? (
+                'Create a new Math'
+              ) : (
+                <>
+                  Edit a {node.type} <i>{node.label.en}</i>
+                </>
+              )}
+            </div>
+            <div className="field">
               <NodeLabelEdit value={label} onChange={setLabel} />
             </div>
-            <div>
+            <div className="field">
               <NodeTypeEdit value={type} onChange={setType} />
             </div>
+            {isNew && (
+              <div className="field select">
+                <select
+                  value={selectedDocument}
+                  onChange={e => dispatch(selectDocument(e.target.value))}
+                >
+                  <option hidden disabled selected value="">
+                    {' -- select a document to save to -- '}
+                  </option>
+                  {availableDocuments.map(doc => (
+                    <option key={doc.uri} value={doc.uri}>
+                      {removeCommonPart(doc.uri, webId)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </p>
         <button
@@ -81,12 +144,15 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
           ></i>
         </button>
         <button
-          className="card-header-icon"
+          className={`card-header-icon has-text-${
+            isValid ? 'success' : 'grey-light'
+          }`}
           aria-label="save changes"
           title="save changes"
           onClick={handleSave}
+          disabled={!isValid}
         >
-          <i className="icon icon-ok has-text-success" aria-hidden="true"></i>
+          <i className="icon icon-ok" aria-hidden="true"></i>
         </button>
       </header>
       <section className="card-content">
@@ -112,17 +178,28 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
           Cancel
         </button>
         <button
-          className="card-header-icon card-footer-item"
+          className={`card-header-icon card-footer-item has-text-${
+            isValid ? 'success' : 'grey-light'
+          }`}
           aria-label="save changes"
           title="save changes"
           onClick={handleSave}
+          disabled={!isValid}
         >
-          <i className="icon icon-ok has-text-success" aria-hidden="true"></i>{' '}
-          Save
+          <i className="icon icon-ok" aria-hidden="true"></i> Save
         </button>
       </footer>
     </div>
   )
+}
+
+const removeCommonPart = (input: string, base: string): string => {
+  const ba = base.split('/')
+  const ia = input.split('/')
+  const i = ia.findIndex((a, i) => a !== ba[i])
+
+  if (i < 3) return input
+  else return ia.slice(i).join('/')
 }
 
 export default StatementEdit

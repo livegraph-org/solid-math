@@ -78,6 +78,12 @@ export interface PartialNode
       >
     > {}
 
+export interface NewNode
+  extends Pick<
+    DefinitionOrStatement,
+    'type' | 'label' | 'description' | 'dependencies' | 'document'
+  > {}
+
 export interface MathDocument {
   id: string
   uri: string

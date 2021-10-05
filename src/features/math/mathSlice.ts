@@ -2,6 +2,7 @@ import {
   createAsyncThunk,
   createSelector,
   createSlice,
+  isAnyOf,
   PayloadAction,
 } from '@reduxjs/toolkit'
 import { AppDispatch, RootState } from '../../app/store'
@@ -9,7 +10,7 @@ import { Entity } from '../../types'
 import { setTemporaryInfo } from '../info/infoSlice'
 import { prune } from './algorithms'
 import * as api from './mathAPI'
-import { Definition, Graph, PartialNode, Statement } from './types'
+import { Definition, Graph, NewNode, PartialNode, Statement } from './types'
 
 export interface MathState {
   entities: {
@@ -19,6 +20,7 @@ export interface MathState {
   ui: {
     highlighted: string
     selected: string
+    create: boolean
   }
 }
 
@@ -32,6 +34,7 @@ const initialState: MathState = {
   ui: {
     highlighted: '',
     selected: '',
+    create: false,
   },
 }
 
@@ -51,9 +54,41 @@ export const updateNode = createAsyncThunk<
   'math/updateNode',
   async (node: PartialNode, { dispatch }): Promise<Definition | Statement> => {
     dispatch(setTemporaryInfo({ type: 'info', message: 'saving ...' }))
-    const updated = await api.updateNode(node)
-    dispatch(setTemporaryInfo({ type: 'success', message: '... saved' }))
-    return updated
+    try {
+      const updated = await api.updateNode(node)
+      dispatch(setTemporaryInfo({ type: 'success', message: '... saved' }))
+      return updated
+    } catch (error) {
+      let message = 'updating failed'
+      if (error instanceof Error) {
+        message += `: ${error.message}`
+      }
+      dispatch(setTemporaryInfo({ type: 'error', message }))
+      throw error
+    }
+  },
+)
+
+export const createNode = createAsyncThunk<
+  Definition | Statement,
+  NewNode,
+  { dispatch: AppDispatch }
+>(
+  'math/createNode',
+  async (node: NewNode, { dispatch }): Promise<Definition | Statement> => {
+    dispatch(setTemporaryInfo({ type: 'info', message: 'saving ...' }))
+    try {
+      const updated = await api.createNode(node)
+      dispatch(setTemporaryInfo({ type: 'success', message: '... saved' }))
+      return updated
+    } catch (error) {
+      let message = 'creating failed'
+      if (error instanceof Error) {
+        message += `: ${error.message}`
+      }
+      dispatch(setTemporaryInfo({ type: 'error', message }))
+      throw error
+    }
   },
 )
 
@@ -66,6 +101,9 @@ export const mathSlice = createSlice({
     },
     select: (state, action: PayloadAction<string>) => {
       state.ui.selected = action.payload
+    },
+    createMath: (state, action: PayloadAction<boolean>) => {
+      state.ui.create = action.payload
     },
   },
   extraReducers: builder => {
@@ -81,34 +119,41 @@ export const mathSlice = createSlice({
           state.entities.node.byId[dependency].dependents.push(dependent)
         })
       })
-      .addCase(updateNode.fulfilled, (state, action) => {
-        const node = action.payload
-        state.entities.node.byId[node.id].label = node.label
-        state.entities.node.byId[node.id].type = node.type
-        state.entities.node.byId[node.id].description = node.description
-        // replace dependencies
-        const oldDependencies = state.entities.node.byId[node.id].dependencies
-        state.entities.node.byId[node.id].dependencies = node.dependencies
-        // fix dependents
-        const deletedDependencies = oldDependencies.filter(
-          d => !node.dependencies.includes(d),
-        )
-        const addedDependencies = node.dependencies.filter(
-          d => !oldDependencies.includes(d),
-        )
-        addedDependencies.forEach(d => {
-          state.entities.node.byId[d].dependents.push(node.id)
-        })
-        deletedDependencies.forEach(d => {
-          state.entities.node.byId[d].dependents = state.entities.node.byId[
-            d
-          ].dependents.filter(a => a !== node.id)
-        })
-      })
+      .addMatcher(
+        isAnyOf(updateNode.fulfilled, createNode.fulfilled),
+        (state, action) => {
+          const node = action.payload
+          if (!state.entities.node.allIds.includes(node.id)) {
+            state.entities.node.allIds.push(node.id)
+            state.entities.node.byId[node.id] = node
+          }
+          state.entities.node.byId[node.id].label = node.label
+          state.entities.node.byId[node.id].type = node.type
+          state.entities.node.byId[node.id].description = node.description
+          // replace dependencies
+          const oldDependencies = state.entities.node.byId[node.id].dependencies
+          state.entities.node.byId[node.id].dependencies = node.dependencies
+          // fix dependents
+          const deletedDependencies = oldDependencies.filter(
+            d => !node.dependencies.includes(d),
+          )
+          const addedDependencies = node.dependencies.filter(
+            d => !oldDependencies.includes(d),
+          )
+          addedDependencies.forEach(d => {
+            state.entities.node.byId[d].dependents.push(node.id)
+          })
+          deletedDependencies.forEach(d => {
+            state.entities.node.byId[d].dependents = state.entities.node.byId[
+              d
+            ].dependents.filter(a => a !== node.id)
+          })
+        },
+      )
   },
 })
 
-export const { highlight, select } = mathSlice.actions
+export const { highlight, select, createMath } = mathSlice.actions
 
 // Selectors
 const selectGraphNodes = (state: RootState) => state.math.entities.node
@@ -154,6 +199,7 @@ export const selectPrunedGraph = createSelector(selectGraph, graph =>
 
 export const selectHighlighted = (state: RootState) => state.math.ui.highlighted
 export const selectSelected = (state: RootState) => state.math.ui.selected
+export const selectCreateMath = (state: RootState) => state.math.ui.create
 
 const selectNodeDependencies = (uri: string, graph: Graph): string[] =>
   uri ? Object.values(graph[uri]?.dependencies ?? {}).map(node => node.uri) : []
