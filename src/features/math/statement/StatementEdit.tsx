@@ -60,7 +60,7 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
     if (!type) throw new Error('please select a type')
     if (!label) throw new Error('please specify a label')
     if (!description) throw new Error('please write a description')
-    if (!selectedDocument) throw new Error('please select a document')
+    if (isNew && !selectedDocument) throw new Error('please select a document')
     isNew
       ? dispatch(
           createNode({
@@ -96,8 +96,8 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
   return (
     <div className="card">
       <header className="card-header">
-        <p className="card-header-title">
-          <div className="block">
+        <div className="card-header-title">
+          <div className="block is-flex-grow-1">
             <div className="title is-6">
               {isNew ? (
                 'Create a new Math'
@@ -119,7 +119,7 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
                   value={selectedDocument}
                   onChange={e => dispatch(selectDocument(e.target.value))}
                 >
-                  <option hidden disabled selected value="">
+                  <option hidden disabled value="">
                     {' -- select a document to save to -- '}
                   </option>
                   {availableDocuments.map(doc => (
@@ -131,7 +131,7 @@ const StatementEdit = ({ onFinish }: { onFinish: () => void }) => {
               </div>
             )}
           </div>
-        </p>
+        </div>
         <button
           className="card-header-icon"
           aria-label="cancel editing"

@@ -7,8 +7,11 @@ import {
   getTermAll,
   getThing,
   getThingAll,
+  getUrl,
   getUrlAll,
   removeAll,
+  removeThing,
+  removeUrl,
   saveSolidDatasetAt,
   setStringWithLocale,
   setThing,
@@ -20,7 +23,7 @@ import {
 } from '@inrupt/solid-client'
 import { fetch } from '@inrupt/solid-client-authn-browser'
 import { rdf, rdfs } from 'rdf-namespaces'
-import { Definition, NewNode, PartialNode, Statement } from './types'
+import { Definition, GraphNode, NewNode, PartialNode, Statement } from './types'
 
 interface Graph {
   nodes: (Definition | Statement)[]
@@ -51,9 +54,6 @@ export const updateNode = async (
   node: PartialNode,
 ): Promise<Definition | Statement> => {
   // we want to save any partial data that are provided
-  // so how do we do it?
-
-  // save a label
 
   const dataset = await getSolidDataset(node.document, { fetch })
   const thing = getThing(dataset, node.id) as ThingPersisted
@@ -95,12 +95,6 @@ export const updateNode = async (
 export const createNode = async (
   node: NewNode,
 ): Promise<Definition | Statement> => {
-  console.log(node)
-  // we want to save any partial data that are provided
-  // so how do we do it?
-
-  // save a label
-
   const dataset = await getSolidDataset(node.document, { fetch })
 
   const uri = getUnusedUri(node.document, dataset, node.label.en)
@@ -142,6 +136,29 @@ const getUnusedUri = (
     i++
   }
   return getUri(i)
+}
+
+export const deleteNode = async (node: GraphNode): Promise<void> => {
+  const dataset = await getSolidDataset(node.document.uri, { fetch })
+
+  // thing to delete
+  const thing = getThing(dataset, node.uri)
+  // all things that depend on the thing
+  const thingsWithoutDependency = getThingAll(dataset)
+    .filter(thing => thing.url !== node.uri)
+    .filter(thing => getUrl(thing, term.dependsOn))
+    .map(thing => removeUrl(thing, term.dependsOn, node.uri))
+
+  if (thing) {
+    // remove thing
+    let newDataset = removeThing(dataset, thing)
+    // remove thing as dependency of all that depend on it
+    thingsWithoutDependency.forEach(thing => {
+      newDataset = setThing(newDataset, thing)
+    })
+
+    await saveSolidDatasetAt(node.document.uri, newDataset, { fetch })
+  }
 }
 
 const thingToNode = (

@@ -3,6 +3,7 @@ import {
   createSelector,
   createSlice,
   isAnyOf,
+  original,
   PayloadAction,
 } from '@reduxjs/toolkit'
 import { AppDispatch, RootState } from '../../app/store'
@@ -10,7 +11,14 @@ import { Entity } from '../../types'
 import { setTemporaryInfo } from '../info/infoSlice'
 import { prune } from './algorithms'
 import * as api from './mathAPI'
-import { Definition, Graph, NewNode, PartialNode, Statement } from './types'
+import {
+  Definition,
+  Graph,
+  GraphNode,
+  NewNode,
+  PartialNode,
+  Statement,
+} from './types'
 
 export interface MathState {
   entities: {
@@ -78,9 +86,9 @@ export const createNode = createAsyncThunk<
   async (node: NewNode, { dispatch }): Promise<Definition | Statement> => {
     dispatch(setTemporaryInfo({ type: 'info', message: 'saving ...' }))
     try {
-      const updated = await api.createNode(node)
+      const created = await api.createNode(node)
       dispatch(setTemporaryInfo({ type: 'success', message: '... saved' }))
-      return updated
+      return created
     } catch (error) {
       let message = 'creating failed'
       if (error instanceof Error) {
@@ -91,6 +99,32 @@ export const createNode = createAsyncThunk<
     }
   },
 )
+
+export const deleteNode = createAsyncThunk<
+  Definition | Statement,
+  GraphNode,
+  { dispatch: AppDispatch }
+>('math/deleteNode', async (node: GraphNode, { dispatch }) => {
+  dispatch(setTemporaryInfo({ type: 'info', message: 'deleting ...' }))
+  try {
+    await api.deleteNode(node)
+    dispatch(setTemporaryInfo({ type: 'success', message: '... deleted' }))
+    return {
+      ...node,
+      id: node.uri,
+      dependencies: Object.keys(node.dependencies),
+      dependents: Object.keys(node.dependents),
+      document: node.document.uri,
+    }
+  } catch (error) {
+    let message = 'deleting failed'
+    if (error instanceof Error) {
+      message += `: ${error.message}`
+    }
+    dispatch(setTemporaryInfo({ type: 'error', message }))
+    throw error
+  }
+})
 
 export const mathSlice = createSlice({
   name: 'math',
@@ -111,13 +145,48 @@ export const mathSlice = createSlice({
       .addCase(addGraph.fulfilled, (state, action) => {
         const { nodes, links } = action.payload
         nodes.forEach(node => {
-          state.entities.node.byId[node.id] = node
+          state.entities.node.byId[node.id] = {
+            ...node,
+            dependencies: [],
+          }
           state.entities.node.allIds.push(node.id)
         })
+        // add dependents to dependencies
         links.forEach(([dependent, dependency]) => {
-          state.entities.node.byId[dependent].dependencies.push(dependency)
-          state.entities.node.byId[dependency].dependents.push(dependent)
+          // @TODO make links to inexistent things better
+          // now they just disappear
+          // we'd like to have ghost nodes: the ones that were not found
+          if (
+            state.entities.node.byId[dependency] &&
+            state.entities.node.byId[dependent]
+          ) {
+            state.entities.node.byId[dependency].dependents.push(dependent)
+            state.entities.node.byId[dependent].dependencies.push(dependency)
+          }
         })
+      })
+      .addCase(deleteNode.fulfilled, (state, action) => {
+        const { dependents, dependencies, id: uri } = action.payload
+
+        // remove this node as dependency from all dependents
+        dependents.forEach(duri => {
+          const newDependencies = state.entities.node.byId[
+            duri
+          ].dependencies.filter(u => u !== uri)
+          state.entities.node.byId[duri].dependencies = newDependencies
+        })
+        // remove this node as dependent from all dependencies
+        dependencies.forEach(duri => {
+          state.entities.node.byId[duri].dependents = state.entities.node.byId[
+            duri
+          ].dependents.filter(u => u !== uri)
+        })
+        // remove this node
+        delete state.entities.node.byId[uri]
+        state.entities.node.allIds = state.entities.node.allIds.filter(
+          i => i !== uri,
+        )
+        state.ui.selected = ''
       })
       .addMatcher(
         isAnyOf(updateNode.fulfilled, createNode.fulfilled),
@@ -130,9 +199,10 @@ export const mathSlice = createSlice({
           state.entities.node.byId[node.id].label = node.label
           state.entities.node.byId[node.id].type = node.type
           state.entities.node.byId[node.id].description = node.description
-          // replace dependencies
-          const oldDependencies = state.entities.node.byId[node.id].dependencies
           state.entities.node.byId[node.id].dependencies = node.dependencies
+          // replace dependencies
+          const oldDependencies =
+            original(state)?.entities.node.byId[node.id]?.dependencies ?? []
           // fix dependents
           const deletedDependencies = oldDependencies.filter(
             d => !node.dependencies.includes(d),
@@ -148,6 +218,7 @@ export const mathSlice = createSlice({
               d
             ].dependents.filter(a => a !== node.id)
           })
+          state.ui.selected = node.id
         },
       )
   },

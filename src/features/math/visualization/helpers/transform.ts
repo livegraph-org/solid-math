@@ -57,7 +57,7 @@ export const transformLayout = (
     transformedNodesDict[highlighted].style = 'accent'
   }
 
-  if (selected) {
+  if (selected && transformedNodesDict[selected]) {
     transformedNodesDict[selected].style = 'focus'
   }
 
