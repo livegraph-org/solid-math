@@ -5,7 +5,7 @@ import {
   highlight,
   select,
   selectHighlighted,
-  selectPrunedGraph,
+  selectPrunedGraphAndCycles,
   selectSelected,
   selectSelectedNodeDependencies,
 } from '../mathSlice'
@@ -22,7 +22,7 @@ import { Matrix, Vector } from './types'
 import Visualization from './Visualization'
 
 const VisualizationContainer: React.FC = props => {
-  const prunedGraph = useAppSelector(selectPrunedGraph)
+  const [prunedGraph, cycles] = useAppSelector(selectPrunedGraphAndCycles)
   const highlightedNode = useAppSelector(selectHighlighted)
   const selectedNode = useAppSelector(selectSelected)
   const selectedNodeDependencies = useAppSelector(
@@ -113,6 +113,7 @@ const VisualizationContainer: React.FC = props => {
     highlightedNode,
     selectedNode,
     selectedNodeDependencies,
+    cycles,
   )
 
   const grid = transformGrid(matrix, basicGrid)

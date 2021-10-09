@@ -1,11 +1,10 @@
-import graphlib, { Graph } from 'graphlib'
-// import { Dependency } from './simulation/types'
-// import findCyclesAdjacency from 'elementary-circuits-directed-graph'
-import { Graph as AbstractGraph } from './types'
+import graphlib from 'graphlib'
+import findCircuits from 'elementary-circuits-directed-graph'
+import { Graph } from './types'
+import cloneDeep from 'lodash.clonedeep'
 
-function pruneCore(graph: Graph) {
+function pruneCore(graph: graphlib.Graph) {
   if (!graphlib.alg.isAcyclic(graph)) {
-    // const cycles = graphlib.alg.findCycles(graph);
     throw new Error('pruning is possible on DAG only')
   }
   const edges = graph.edges()
@@ -22,7 +21,7 @@ function pruneCore(graph: Graph) {
   return graph
 }
 
-export const prune = (input: AbstractGraph): AbstractGraph => {
+export const prune = (input: Graph): Graph => {
   const graph = new graphlib.Graph()
 
   Object.values(input).forEach(node => {
@@ -33,10 +32,10 @@ export const prune = (input: AbstractGraph): AbstractGraph => {
     )
   })
 
-  const output: AbstractGraph = Object.fromEntries(
+  const output: Graph = Object.fromEntries(
     Object.entries(input).map(([uri, node]) => [
       uri,
-      { ...node, dependencies: {} },
+      { ...node, dependencies: {}, dependents: {} },
     ]),
   )
 
@@ -46,69 +45,111 @@ export const prune = (input: AbstractGraph): AbstractGraph => {
 
   prunedEdges.forEach(({ source, target }) => {
     output[source].dependencies[target] = output[target]
+    output[target].dependents[source] = output[source]
   })
 
   return output
 }
 
-/*
-export function getCycles(dependencies: Dependency[]): Dependency[][] {
-  const nodes = Array.from(
-    new Set([
-      ...dependencies.map(d => d.dependent),
-      ...dependencies.map(d => d.dependency),
-    ]),
-  )
-  const nodeIndexes = Object.fromEntries(
-    Object.entries(nodes).map(([key, value]) => [value, +key]),
-  )
+// convert Graph to adjacency list, so we can feed it into the library
+// elementary-circuits-directed-graph
+const graph2adjacency = (graph: Graph): [AdjacencyList, string[]] => {
+  const indexes = Object.keys(graph).sort()
 
-  const adjacency = Array(nodes.length)
+  const adjacencyList = Array(indexes.length)
     .fill(null)
     .map(() => [] as number[])
-  dependencies.forEach(({ dependent, dependency }) => {
-    const dependentIndex = nodeIndexes[dependent]
-    const dependencyIndex = nodeIndexes[dependency]
-    adjacency[dependentIndex].push(dependencyIndex)
+
+  indexes.forEach((id, i) => {
+    adjacencyList[i] = Object.keys(graph[id].dependencies).map(id2 =>
+      indexes.findIndex(a => a === id2),
+    )
   })
+
+  return [adjacencyList, indexes]
+}
+
+type AdjacencyList = number[][]
+type Cycle = number[]
+type UriCycle = string[]
+
+const findLoops = (adjacencyList: AdjacencyList): Cycle[] => {
+  return (
+    adjacencyList
+      // save the index along with value
+      .map((a, i) => [a, i] as [number[], number])
+      // filter every adjacencyList item with loop
+      .filter(([a, i]) => a.includes(i))
+      // return simple loop
+      .map(([, i]) => [i])
+  )
+}
+
+export const getCycles = (graph: Graph): UriCycle[] => {
+  // first convert graph into a simple adjacency matrix
+  const [adjacencyList, indexes] = graph2adjacency(graph)
 
   // try to detect loops (cycles of length 1)
   // this is due to the limits of the findCyclesAdjacency, which fails to detect loops
   // https://github.com/antoinerg/elementary-circuits-directed-graph/issues/13
   // @TODO remove loop detection when the issue is fixed
-  const loops = adjacency.reduce((loops, adj, i) => {
-    if (adj.includes(i)) loops.push([i, i])
-    return loops
-  }, [] as number[][])
+  const loops = findLoops(adjacencyList)
+  // get all the other loops
+  const otherCycles = findCircuits(adjacencyList)
+    // filter out loops, so we avoid duplicates (see the above-linked issue)
+    .filter(a => a.length > 2)
+    // and remove the last element of each cycle
+    // because the library spits them out in the form [[0, 1, 0], [0, 1, 2, 4, 3, 0]]
+    .map(cycle => cycle.slice(0, -1))
 
-  const rawCycles = loops.length > 0 ? loops : findCyclesAdjacency(adjacency)
-
-  const simpleCycles = rawCycles.map(cycle =>
-    cycle.slice(0, -1).map(i => nodes[i]),
+  const cycles = [...loops, ...otherCycles].map(cycle =>
+    cycle.map(i => indexes[i]),
   )
 
-  return simpleCycles
-    .map(cycle => simpleCycleToCycle(cycle, dependencies))
-    .sort((a, b) => a.length - b.length)
-    .slice(0, 5)
+  return cycles
 }
 
-function simpleCycleToCycle(
-  simpleCycle: string[],
-  dependencies: Dependency[],
-): Dependency[] {
-  return simpleCycle.map((uri, index) => {
-    const dependent = simpleCycle[index]
-    const dependency = simpleCycle[(index + 1) % simpleCycle.length]
-    return (
-      dependencies.find(
-        d => d.dependency === dependency && d.dependent === dependent,
-      ) || {
-        dependent,
-        dependency,
-        doc: '',
-      }
+export const pruneWithCycles = (graph: Graph): [Graph, UriCycle[]] => {
+  // clone the graph
+  graph = cloneDeep(graph)
+  // first detect cycles
+  const cycles = getCycles(graph)
+  const edges = cycles
+    // collect edges from all cycles
+    .map(cycle => cycle2edges(cycle))
+    .flat()
+    // and filter out duplicates
+    .filter(
+      ([a, b], i, edges) =>
+        edges.findIndex(([c, d]) => a === c && b === d) === i,
     )
+  // then remove all edges that are part of cycles
+  const dag = removeEdges(graph, edges)
+  // then prune the remaining graph
+  const prunedDag = prune(dag)
+  // then add the cycles back
+  const prunedGraph = addEdges(prunedDag, edges)
+  // and return
+  return [prunedGraph, cycles]
+}
+
+type Edge = [string, string]
+
+export const cycle2edges = (cycle: UriCycle): Edge[] =>
+  cycle.map((uri, i, cycle) => [cycle[i], cycle[(i + 1) % cycle.length]])
+
+const removeEdges = (graph: Graph, edges: Edge[]): Graph => {
+  edges.forEach(([a, b]) => {
+    delete graph[a].dependencies[b]
+    delete graph[b].dependents[a]
   })
-  }
-  */
+  return graph
+}
+
+const addEdges = (graph: Graph, edges: Edge[]): Graph => {
+  edges.forEach(([a, b]) => {
+    graph[a].dependencies[b] = graph[b]
+    graph[b].dependents[a] = graph[a]
+  })
+  return graph
+}

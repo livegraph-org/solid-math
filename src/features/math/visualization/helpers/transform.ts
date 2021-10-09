@@ -1,8 +1,8 @@
-import { Grid, Matrix, Vector } from '../types'
-import { VisualizationGraph } from '../types'
+import numeric from 'numeric'
+import { cycle2edges } from '../../algorithms'
 import { GraphNode } from '../../types'
 import { SimulationGraph } from '../simulation/types'
-import numeric from 'numeric'
+import { Grid, Matrix, Vector, VisualizationGraph } from '../types'
 
 export const transform = (matrix: Matrix, vector: Vector): Vector => {
   const raw = numeric.dot(matrix, numeric.transpose([[...vector, 1]])) as Matrix
@@ -40,12 +40,16 @@ export const transformLayout = (
   highlighted: string,
   selected: string,
   selectedDependencies: string[],
+  cycles: string[][],
 ): VisualizationGraph => {
   const transformedNodesDict = Object.fromEntries(
     graph.nodes.map(node => {
       const [x, y] = transform(matrix, [node.x, node.y])
       const r = matrix[0][0] * node.r
-      return [node.uri, { ...node, x, y, r, style: '' }]
+      return [
+        node.uri,
+        { ...node, x, y, r, style: '' } as VisualizationGraph['nodes'][0],
+      ]
     }),
   )
 
@@ -60,6 +64,10 @@ export const transformLayout = (
   if (selected && transformedNodesDict[selected]) {
     transformedNodesDict[selected].style = 'focus'
   }
+
+  // highlight cycles as errors
+  // so first we collect the cycle edges
+  const errorEdges = cycles.map(cycle => cycle2edges(cycle)).flat()
 
   const links = graph.links.map(link => {
     const sourceUri =
@@ -76,7 +84,12 @@ export const transformLayout = (
         : link.target.uri
     const source = transformedNodesDict[sourceUri]
     const target = transformedNodesDict[targetUri]
-    return { source, target }
+    const style = errorEdges.some(
+      ([a, b]) => a === source.uri && b === target.uri,
+    )
+      ? 'error'
+      : ''
+    return { source, target, style } as VisualizationGraph['links'][0]
   })
 
   return { nodes: Object.values(transformedNodesDict), links }

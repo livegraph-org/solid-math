@@ -4,12 +4,13 @@ type VisualizationNode = {
   r: number
   uri: string
   label: string
-  style: string
+  style: '' | 'focus' | 'focus2' | 'accent'
 }
 
 type VisualizationLink = {
   source: VisualizationNode
   target: VisualizationNode
+  style: '' | 'error'
 }
 
 export type VisualizationGraph = {

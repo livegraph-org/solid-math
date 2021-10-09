@@ -69,6 +69,8 @@ const StatementView = ({ onEdit }: { onEdit: () => void }) => {
   const onSelectNode = (uri: string) => dispatch(select(uri))
   const node = useAppSelector(selectSelectedNode)
 
+  if (node.label.en === 'aa') console.log(node)
+
   const dependencies: GraphNode[] = Object.values(node.dependencies)
   const dependents: GraphNode[] = Object.values(node.dependents)
 

@@ -65,7 +65,7 @@ export const drawGraph = (
       numeric.add(s, numeric.mul(i, link.source.r)) as Vector,
       numeric.sub(t, numeric.mul(i, link.target.r)) as Vector,
       {
-        strokeStyle: 'white',
+        strokeStyle: link.style === 'error' ? 'red' : 'white',
         lineWidth: 0.5,
       },
     )

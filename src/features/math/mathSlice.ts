@@ -9,7 +9,7 @@ import {
 import { AppDispatch, RootState } from '../../app/store'
 import { Entity } from '../../types'
 import { setTemporaryInfo } from '../info/infoSlice'
-import { prune } from './algorithms'
+import { prune, pruneWithCycles } from './algorithms'
 import * as api from './mathAPI'
 import {
   Definition,
@@ -262,6 +262,10 @@ export const selectGraph = createSelector(
 
     return enrichedNodes
   },
+)
+
+export const selectPrunedGraphAndCycles = createSelector(selectGraph, graph =>
+  pruneWithCycles(graph),
 )
 
 export const selectPrunedGraph = createSelector(selectGraph, graph =>
