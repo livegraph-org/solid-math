@@ -1,5 +1,5 @@
 import numeric from 'numeric'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import {
   highlight,
@@ -11,14 +11,12 @@ import {
 } from '../mathSlice'
 import {
   basicGrid,
-  nodeRadius,
   transform,
   transformGrid,
   transformLayout,
 } from './helpers/transform'
-import Simulation from './simulation'
-import { SimulationGraph, SimulationLink } from './simulation/types'
 import { Matrix, Vector } from './types'
+import useSimulation from './useSimulation'
 import Visualization from './Visualization'
 
 const VisualizationContainer: React.FC = props => {
@@ -30,11 +28,8 @@ const VisualizationContainer: React.FC = props => {
   )
   const dispatch = useAppDispatch()
 
-  const [simulation] = useState(new Simulation())
-  const [layout, setLayout] = useState<SimulationGraph>({
-    nodes: [],
-    links: [],
-  })
+  const { simulation, layout } = useSimulation(prunedGraph)
+
   // transformation matrix
   const [matrix, setMatrix] = useState<Matrix>([
     [1, 0, 0],
@@ -42,51 +37,9 @@ const VisualizationContainer: React.FC = props => {
     [0, 0, 1],
   ])
 
-  // initialize simulation
-  useEffect(() => {
-    let lastUpdate = Date.now() - 20
-    simulation.start({
-      nodes: [],
-      links: [],
-      onTick: ({ nodes, links }) => {
-        const now = Date.now()
-        if (now > lastUpdate + 20) {
-          setLayout({ nodes: [...nodes], links: [...links] })
-          lastUpdate = now
-        }
-      },
-    })
-    return () => {
-      simulation.stop()
-    }
-  }, [simulation])
-
-  // when graph changes, update simulation
-  useEffect(() => {
-    const nodes = Object.values(prunedGraph).map(node => ({
-      label: node.label.en,
-      x: Math.random() * 400,
-      y: Math.random() * 400,
-      r: nodeRadius(node),
-      uri: node.uri,
-    }))
-
-    const links: SimulationLink[] = Object.values(prunedGraph).reduce(
-      (links, { uri: source, dependencies }) => {
-        Object.keys(dependencies).forEach(target =>
-          links.push({ source, target }),
-        )
-        return links
-      },
-      [] as SimulationLink[],
-    )
-
-    simulation.update({ nodes, links })
-  }, [prunedGraph, simulation])
-
-  const handleTransform = (matrix: Matrix): void => {
+  const handleTransform = useCallback((matrix: Matrix): void => {
     setMatrix(prevMatrix => numeric.dot(matrix, prevMatrix) as Matrix)
-  }
+  }, [])
 
   const withNode = (action: (uri: string) => unknown) => {
     return (position: Vector): void => {
