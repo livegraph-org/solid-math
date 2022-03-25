@@ -132,13 +132,12 @@ export const drawGrid = (
   grid: Grid,
   width: number,
   height: number,
-  offset: Vector = [0, 0],
 ) => {
   const strokeStyle = '#fff2'
-  const min1 = -offset[1]
-  const max1 = height - offset[1]
-  const min0 = -offset[0]
-  const max0 = width - offset[0]
+  const min1 = 0
+  const max1 = height
+  const min0 = 0
+  const max0 = width
 
   const getLineWidth = (i: number) =>
     i === 0 ? 2 : i % grid.highlight === 0 ? 1 : 0.5
